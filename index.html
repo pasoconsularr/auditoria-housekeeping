@@ -620,6 +620,89 @@
         .row-click { cursor: pointer; }
         .row-click:hover { background: #f8fafc; }
 
+        /* ---------- DESTACADA DEL PERIODO ---------- */
+        .dest-wrap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.1rem;
+        }
+        .destacada {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #fde68a;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        }
+        .destacada.week { border-color: #bfdbfe; background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+        .dest-ico { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+        .dest-body { min-width: 0; }
+        .dest-lbl {
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.03em; color: #92400e;
+        }
+        .destacada.week .dest-lbl { color: #1d4ed8; }
+        .dest-name { font-size: 1.05rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .dest-meta { font-size: 0.72rem; color: #64748b; font-weight: 600; }
+
+        /* ---------- RANKING EN TARJETAS ---------- */
+        .rank-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .rank-card {
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 0.8rem 0.9rem;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            background: #fff;
+        }
+        .rank-card:hover { border-color: #a78bfa; box-shadow: 0 2px 10px rgba(124,58,237,0.1); }
+        .rank-card.unranked { background: #f8fafc; border-style: dashed; }
+        .rank-card.unranked .rank-pos { background: #f1f5f9; color: #94a3b8; }
+        .rank-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+        .rank-name { flex: 1; font-weight: 800; color: var(--primary); font-size: 0.95rem; min-width: 0; }
+        .rank-meta {
+            display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem;
+            font-size: 0.74rem; color: #64748b; font-weight: 600;
+            margin-top: 0.45rem;
+        }
+        .rank-weak {
+            margin-top: 0.4rem; padding-top: 0.4rem;
+            border-top: 1px dashed #e2e8f0;
+            font-size: 0.73rem; color: #64748b;
+        }
+        .rank-weak b { color: var(--danger); }
+
+        /* ---------- AJUSTES PARA TELÉFONO ---------- */
+        @media (max-width: 640px) {
+            .sup-hero { gap: 1rem; padding: 1rem; justify-content: center; text-align: center; }
+            .sup-hero-id { flex: 1 1 100%; }
+            .sup-kpis { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+            .sup-kpi { padding: 0.65rem 0.4rem; }
+            .sup-kpi .num { font-size: 1.15rem; }
+            .sup-kpi .lbl { font-size: 0.6rem; }
+            .sup-kpi .sub { font-size: 0.58rem; }
+
+            .fail-row { grid-template-columns: 1fr auto; gap: 0.4rem 0.6rem; }
+            .fail-row .fail-bar { grid-column: 1 / -1; order: 3; }
+            .fail-txt { font-size: 0.8rem; }
+            .fail-num { font-size: 0.72rem; white-space: nowrap; }
+
+            /* En pantallas chicas las tablas largas se recortan a lo esencial */
+            #detail-table th:nth-child(2), #detail-table td:nth-child(2),
+            #detail-table th:nth-child(3), #detail-table td:nth-child(3),
+            #detail-table th:nth-child(4), #detail-table td:nth-child(4),
+            #detail-table th:nth-child(7), #detail-table td:nth-child(7) { display: none; }
+
+            .audit-modal { padding: 0; }
+            .audit-modal-box { border-radius: 0; min-height: 100%; }
+            .am-photo { width: 88px; height: 88px; }
+
+            .destacada { padding: 0.7rem 0.8rem; }
+            .dest-name { font-size: 0.95rem; }
+        }
+
         /* ---------- MODAL DE DETALLE DE AUDITORÍA ---------- */
         .audit-modal {
             display: none;
@@ -1023,6 +1106,91 @@
         .pdf-obs { background: #f8fafc; border-radius: 8px; padding: 14px; font-size: 0.85rem; border: 1px solid #e2e8f0; white-space: pre-wrap; min-height: 20px; }
         .pdf-footer { margin-top: 28px; text-align: center; font-size: 0.68rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
 
+        /* ---------- TABLAS DE INFORME (alineadas y legibles en PDF) ---------- */
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; table-layout: fixed; }
+        .pdf-table th {
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 0.63rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            font-weight: 800;
+            padding: 7px 8px;
+            text-align: left;
+            border-bottom: 2px solid #cbd5e1;
+        }
+        .pdf-table td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .pdf-table tr { page-break-inside: avoid; }
+        .pdf-table .num-col { text-align: right; white-space: nowrap; }
+        .pdf-table .mid-col { text-align: center; white-space: nowrap; }
+        .pdf-table tbody tr:nth-child(even) td { background: #fafbfc; }
+
+        .pdf-rank-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 0; border-bottom: 1px solid #e2e8f0;
+            page-break-inside: avoid;
+        }
+        .pdf-rank-row:last-child { border-bottom: none; }
+        .pdf-rank-pos {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #e2e8f0; color: #475569;
+            font-size: 0.7rem; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .pdf-rank-pos.top { background: #fbbf24; color: #78350f; }
+        .pdf-rank-main { flex: 1; min-width: 0; }
+        .pdf-rank-name { font-size: 0.82rem; font-weight: 800; color: #0f172a; }
+        .pdf-rank-sub { font-size: 0.64rem; color: #64748b; margin-top: 1px; }
+        .pdf-rank-bar { background: #e2e8f0; border-radius: 5px; height: 8px; overflow: hidden; margin-top: 4px; }
+        .pdf-rank-bar span { display: block; height: 100%; border-radius: 5px; }
+        .pdf-rank-score { font-size: 0.95rem; font-weight: 800; width: 52px; text-align: right; flex-shrink: 0; }
+
+        .pdf-note {
+            font-size: 0.68rem; color: #64748b;
+            background: #f8fafc; border-left: 3px solid #cbd5e1;
+            padding: 8px 11px; border-radius: 0 6px 6px 0;
+            margin-bottom: 12px;
+        }
+        .pdf-kv { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .pdf-kv-item {
+            flex: 1 1 120px; background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 8px; padding: 9px 11px;
+        }
+        .pdf-kv-item .k { font-size: 0.6rem; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: 0.02em; }
+        .pdf-kv-item .v { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
+        .pdf-kv-item .s { font-size: 0.6rem; color: #94a3b8; }
+
+        .pdf-urgent { color: #b91c1c; font-weight: 800; }
+        .pdf-warn { color: #b45309; font-weight: 700; }
+
+        /* ---------- BOTONES DE INFORME ---------- */
+        .report-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; }
+        .report-btn {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            background: #fff;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .report-btn:hover { box-shadow: 0 2px 12px rgba(15,23,42,0.09); }
+        .report-btn.primary:hover { border-color: var(--primary); }
+        .report-btn.maint:hover { border-color: #b45309; }
+        .report-btn .ico { font-size: 1.5rem; flex-shrink: 0; }
+        .report-btn .txt { display: flex; flex-direction: column; min-width: 0; }
+        .report-btn .txt b { font-size: 0.88rem; color: var(--primary); }
+        .report-btn .txt small { font-size: 0.72rem; color: #64748b; }
+
         @media print {
             .bottom-bar { display: none !important; }
             .tabs-bar { display: none !important; }
@@ -1259,17 +1427,8 @@
             </div>
 
             <div class="card">
-                <h2 class="section-title" style="background-color:#475569;">📋 Tablas de Detalle</h2>
-
-                <h3 style="color:var(--primary); font-size:1rem;">Promedio por Supervisora y Periodo</h3>
-                <div class="table-wrap" style="margin-bottom:1.5rem;">
-                    <table class="data-table" id="summary-table">
-                        <thead><tr><th>Periodo</th><th>Supervisora</th><th>Evaluaciones</th><th>Promedio</th><th>Limpieza</th><th>Mantenimiento</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <h3 style="color:var(--primary); font-size:1rem;">Registro Detallado</h3>
+                <h2 class="section-title" style="background-color:#475569;">📋 Registro Detallado</h2>
+                <p class="section-subtitle">Cada auditoría guardada. Toca una fila para ver qué cumplió, qué no y su evidencia fotográfica.</p>
                 <div class="table-wrap">
                     <table class="data-table" id="detail-table">
                         <thead><tr><th>Fecha</th><th>Semana del mes</th><th>Mes</th><th>Año</th><th>Habitación</th><th>Supervisora</th><th>Auditor</th><th>Puntaje</th><th>No cumplen</th><th>Evidencia</th><th></th></tr></thead>
@@ -1278,14 +1437,20 @@
                 </div>
             </div>
 
-            <!-- INFORME ACUMULADO -->
+            <!-- INFORMES PDF -->
             <div class="card">
-                <h2 class="section-title" style="background-color:#1e293b;">
-                    <span>📑 Informe de Evaluación Acumulada</span>
-                    <button class="btn-outline" style="background:white;" onclick="generarInformeAcumulado()">⬇️ Descargar Informe PDF</button>
-                </h2>
-                <p class="section-subtitle">Informe consolidado según los filtros de supervisora y periodo seleccionados arriba.</p>
-                <div id="cumulative-report"></div>
+                <h2 class="section-title" style="background-color:#1e293b;">📑 Informes PDF</h2>
+                <p class="section-subtitle" id="report-hint">Los informes respetan los filtros seleccionados arriba.</p>
+                <div class="report-actions">
+                    <button class="report-btn primary" onclick="generarInformeAcumulado()">
+                        <span class="ico">📊</span>
+                        <span class="txt"><b id="btn-informe-title">Informe general</b><small id="btn-informe-sub">Desempeño consolidado</small></span>
+                    </button>
+                    <button class="report-btn maint" onclick="generarInformeMantenimiento()">
+                        <span class="ico">🔧</span>
+                        <span class="txt"><b>Informe de mantenimiento</b><small id="btn-maint-sub">Averías pendientes de atender</small></span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1324,6 +1489,31 @@
     <!-- Visor de foto a pantalla completa -->
     <div class="photo-viewer" id="photo-viewer" onclick="closePhotoViewer()">
         <img id="photo-viewer-img" alt="Evidencia fotográfica">
+    </div>
+
+    <!-- Confirmación con PIN para acciones que borran -->
+    <div class="audit-modal" id="admin-pin-modal">
+        <div class="audit-modal-box" style="max-width:420px;">
+            <div class="audit-modal-head" style="background:var(--danger);">
+                <div>
+                    <h3 id="apin-title">Confirmar eliminación</h3>
+                    <div class="sub" id="apin-sub"></div>
+                </div>
+            </div>
+            <div class="audit-modal-body">
+                <p style="font-size:0.85rem; color:#475569; margin:0 0 0.85rem;">
+                    Esta acción requiere el PIN de administrador.
+                </p>
+                <input type="password" inputmode="numeric" maxlength="4" id="apin-input"
+                       class="form-control" placeholder="••••"
+                       style="text-align:center; letter-spacing:0.5rem; font-size:1.3rem;">
+                <div id="apin-error" style="color:var(--danger); font-size:0.8rem; font-weight:700; min-height:1.2rem; margin-top:0.4rem;"></div>
+                <div style="display:flex; gap:0.6rem; margin-top:0.6rem;">
+                    <button type="button" class="btn-outline" style="flex:1;" id="apin-cancel">Cancelar</button>
+                    <button type="button" style="flex:1; background:var(--danger); color:#fff; border:none; border-radius:8px; padding:0.7rem; font-weight:700; cursor:pointer;" id="apin-ok">Eliminar</button>
+                </div>
+            </div>
+        </div>
     </div>
     </div> <!-- /#app-root -->
 
@@ -1571,18 +1761,23 @@
                 moduleII = DEFAULT_MODULE_II;
                 await storageSetJSON('config:moduleII', moduleII);
             }
-            CONFIG = { supervisors, moduleI, moduleII };
+            const moduleTs = (await storageGetJSON('config:moduleTs')) || 0;
+            CONFIG = { supervisors, moduleI, moduleII, moduleTs };
         }
 
         async function persistSupervisors() {
             await storageSetJSON('config:supervisors', CONFIG.supervisors);
         }
-        async function persistModuleI() {
+        /* Guarda el checklist marcándolo con la hora del cambio. Ese sello es
+           lo que permite que un ítem añadido en un teléfono llegue al resto y
+           no lo pise una versión vieja de otro dispositivo. */
+        async function persistModules() {
+            CONFIG.moduleTs = Date.now();
             await storageSetJSON('config:moduleI', CONFIG.moduleI);
-        }
-        async function persistModuleII() {
             await storageSetJSON('config:moduleII', CONFIG.moduleII);
+            await storageSetJSON('config:moduleTs', CONFIG.moduleTs);
         }
+
 
         /* =========================================================
            RENDER: SUPERVISORAS
@@ -1824,6 +2019,52 @@
         }
 
         /* =========================================================
+           PIN DE ADMINISTRADOR PARA ACCIONES QUE BORRAN
+           ========================================================= */
+        const ADMIN_PIN = '6284';
+
+        function askAdminPin(titulo, detalle) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('admin-pin-modal');
+                const input = document.getElementById('apin-input');
+                const error = document.getElementById('apin-error');
+                const btnOk = document.getElementById('apin-ok');
+                const btnCancel = document.getElementById('apin-cancel');
+
+                document.getElementById('apin-title').textContent = titulo;
+                document.getElementById('apin-sub').textContent = detalle || '';
+                input.value = '';
+                error.textContent = '';
+                modal.classList.add('open');
+                setTimeout(() => input.focus(), 100);
+
+                function cerrar(resultado) {
+                    modal.classList.remove('open');
+                    btnOk.onclick = null;
+                    btnCancel.onclick = null;
+                    input.onkeydown = null;
+                    modal.onclick = null;
+                    resolve(resultado);
+                }
+
+                function confirmar() {
+                    if (input.value === ADMIN_PIN) {
+                        cerrar(true);
+                    } else {
+                        error.textContent = 'PIN incorrecto.';
+                        input.value = '';
+                        input.focus();
+                    }
+                }
+
+                btnOk.onclick = confirmar;
+                btnCancel.onclick = () => cerrar(false);
+                input.onkeydown = (e) => { if (e.key === 'Enter') confirmar(); };
+                modal.onclick = (e) => { if (e.target === modal) cerrar(false); };
+            });
+        }
+
+        /* =========================================================
            RENDER: ÍTEMS DE MÓDULOS (dinámicos)
            ========================================================= */
         function renderItemCard(item, index, moduleKey, moduleLabel, radioType) {
@@ -1832,7 +2073,7 @@
             const textPos = radioType === 'bueno' ? 'Buen Estado' : 'Cumple';
             const textNeg = radioType === 'bueno' ? 'Averiado' : 'No Cumple';
             const actionSmall = radioType === 'bueno'
-                ? `<small style="color:var(--danger); font-weight:bold;">🔧 Ticket Generado</small><button type="button" class="action-btn" style="border-color:var(--danger); color:var(--danger);" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Foto Avería</button>`
+                ? `<small style="color:var(--danger); font-weight:bold;">🔧 Avería — irá al informe de mantenimiento</small><button type="button" class="action-btn" style="border-color:var(--danger); color:var(--danger);" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Foto de la avería</button>`
                 : `<small>⚠️ Evidencia requerida</small><button type="button" class="action-btn" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Tomar Foto</button>`;
 
             return `
@@ -1887,23 +2128,40 @@
             const nextNum = list.length + 1 + (moduleKey === 'II' ? 100 : 0); // avoid id collisions
             const id = prefix + '_' + Date.now();
             list.push({ id, text });
-            if (moduleKey === 'I') { await persistModuleI(); } else { await persistModuleII(); }
+            await persistModules();
+            input.value = '';
             renderModules();
             resetScoreDisplay();
-            showToast('✅ Ítem añadido al Módulo ' + moduleKey);
+            showToast('✅ Ítem añadido al Módulo ' + moduleKey + '. Guardando en la nube...', 2500);
+
+            // Se sube en el momento: así el ítem no depende de que alguien
+            // guarde una auditoría para llegar a los demás dispositivos.
+            pushRemote().then(ok => {
+                showToast(ok
+                    ? '☁️ Ítem guardado y disponible en todos los dispositivos.'
+                    : '📴 Ítem guardado en este dispositivo. Se subirá cuando haya conexión.', 3500);
+            });
         }
 
         async function removeItem(moduleKey, itemId) {
-            if (!confirm('¿Eliminar este ítem de evaluación? Esto no afecta auditorías ya guardadas.')) return;
+            const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
+            const item = list.find(it => it.id === itemId);
+            const ok = await askAdminPin(
+                'Eliminar ítem de evaluación',
+                item ? item.text : 'Este ítem se quitará del checklist.'
+            );
+            if (!ok) return;
+
             if (moduleKey === 'I') {
                 CONFIG.moduleI = CONFIG.moduleI.filter(it => it.id !== itemId);
-                await persistModuleI();
             } else {
                 CONFIG.moduleII = CONFIG.moduleII.filter(it => it.id !== itemId);
-                await persistModuleII();
             }
+            await persistModules();
             renderModules();
             resetScoreDisplay();
+            showToast('🗑️ Ítem eliminado. Las auditorías ya guardadas no se ven afectadas.', 3500);
+            pushRemote();
         }
 
         /* =========================================================
@@ -2133,6 +2391,26 @@
             return Array.from(map.values());
         }
 
+        /* El checklist se resuelve por "gana el más reciente": es una lista
+           editada por el administrador, no algo que dos personas cambien a la
+           vez, y así una eliminación no revive al sincronizar. */
+        async function adoptRemoteModules(data) {
+            if (!data) return false;
+            const remoteTs = Number(data.moduleTs) || 0;
+            const localTs = Number(CONFIG.moduleTs) || 0;
+            if (remoteTs <= localTs) return false;
+            if (!Array.isArray(data.moduleI) || !Array.isArray(data.moduleII)) return false;
+
+            CONFIG.moduleI = data.moduleI;
+            CONFIG.moduleII = data.moduleII;
+            CONFIG.moduleTs = remoteTs;
+            await storageSetJSON('config:moduleI', CONFIG.moduleI);
+            await storageSetJSON('config:moduleII', CONFIG.moduleII);
+            await storageSetJSON('config:moduleTs', CONFIG.moduleTs);
+            renderModules();
+            return true;
+        }
+
         function mergeSupervisorLists(remoteList, localList) {
             return Array.from(new Set([...(remoteList || []), ...(localList || [])]));
         }
@@ -2159,6 +2437,10 @@
                 CONFIG.supervisors = mergedSupervisors;
                 await persistSupervisors();
             }
+
+            // Trae los ítems del checklist añadidos o borrados desde otro equipo
+            if (await adoptRemoteModules(remote.data)) changed = true;
+
             return changed;
         }
 
@@ -2170,6 +2452,10 @@
             try {
                 const remote = await loadRemoteDetailed();
                 if (remote.ok) remoteConfirmedOnce = true;
+
+                // Si la nube tiene un checklist más nuevo, se adopta ANTES de
+                // subir, para no pisar con esta copia lo que cambió otro equipo.
+                if (remote.ok && remote.data) await adoptRemoteModules(remote.data);
 
                 const localRecords = await fetchAllRecords();
                 const mergedRecords = remote.ok && remote.data
@@ -2183,6 +2469,7 @@
                     supervisors: mergedSupervisors,
                     moduleI: CONFIG.moduleI,
                     moduleII: CONFIG.moduleII,
+                    moduleTs: CONFIG.moduleTs || 0,
                     records: mergedRecords
                 };
 
@@ -2316,26 +2603,6 @@
                 <div class="stat-card"><div class="num">${worst}%</div><div class="lbl">Menor auditoría</div></div>
             `;
 
-            // Summary grouped by period + supervisor
-            const groups = {};
-            records.forEach(r => {
-                const key = periodLabel(r, period) + '|' + r.supervisor;
-                if (!groups[key]) groups[key] = { periodLbl: periodLabel(r, period), supervisor: r.supervisor, items: [], sortKey: periodSortKey(r, period) };
-                groups[key].items.push(r);
-            });
-            const groupArr = Object.values(groups)
-                .map(g => ({ ...g, agg: aggregate(g.items) }))
-                .sort((a, b) => b.sortKey - a.sortKey);
-            document.querySelector('#summary-table tbody').innerHTML = groupArr.map(g => `
-                <tr>
-                    <td>${g.periodLbl}</td>
-                    <td>${escapeHtml(g.supervisor)}</td>
-                    <td>${g.agg.count}</td>
-                    <td><span class="badge" style="background:${scoreColor(g.agg.overall)}">${g.agg.overall}%</span> <span style="font-size:0.65rem; color:#94a3b8;">${g.agg.points}/${g.agg.pointsMax}</span></td>
-                    <td>${g.agg.moduleI !== null ? g.agg.moduleI + '%' : '--'}</td>
-                    <td>${g.agg.moduleII !== null ? g.agg.moduleII + '%' : '--'}</td>
-                </tr>`).join('') || '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Sin datos aún</td></tr>';
-
             // Detail table
             document.querySelector('#detail-table tbody').innerHTML = records.map(r => {
                 const its = recItemList(r);
@@ -2359,7 +2626,21 @@
 
             renderSupervisorPanel(records);
             renderPerfPanel();
-            renderCumulativeOnScreen();
+            updateReportButtons(records);
+        }
+
+        /* Los botones de informe se adaptan al filtro activo. */
+        function updateReportButtons(records) {
+            const sup = document.getElementById('filter-supervisor').value;
+            const averias = maintenanceIssues(records);
+            document.getElementById('btn-informe-title').textContent =
+                sup ? 'Informe de ' + sup : 'Informe general';
+            document.getElementById('btn-informe-sub').textContent =
+                sup ? 'Desempeño detallado de la supervisora' : 'Consolidado y ranking de supervisoras';
+            document.getElementById('btn-maint-sub').textContent =
+                averias.length ? averias.length + ' avería(s) registrada(s)' : 'Sin averías registradas';
+            document.getElementById('report-hint').textContent =
+                'Los informes respetan los filtros de arriba' + (sup ? ' (supervisora: ' + sup + ').' : '.');
         }
 
         function scoreColor(pct) {
@@ -2436,6 +2717,79 @@
             };
         }
 
+        /* =========================================================
+           RANKING JUSTO
+           Un 100% con una sola auditoría no dice lo mismo que un 90% con
+           treinta. El orden usa un puntaje ponderado que acerca los
+           resultados con pocas auditorías al promedio general, y se separa
+           del puntaje real a medida que hay más evidencia detrás.
+           ========================================================= */
+        const PRIOR_AUDITS = 3;        // "peso" del promedio general, en auditorías
+        const MIN_AUDITS_RANKED = 3;   // mínimo para entrar al ranking
+
+        function confidenceLabel(count) {
+            if (count >= 10) return { txt: 'Alta', color: '#10b981' };
+            if (count >= 4) return { txt: 'Media', color: '#f59e0b' };
+            return { txt: 'Baja', color: '#94a3b8' };
+        }
+
+        function weightedRanking(records) {
+            const global = aggregate(records);
+            const globalRatio = global.pointsMax > 0 ? global.points / global.pointsMax : 0;
+            const avgMaxPerAudit = records.length ? global.pointsMax / records.length : 32;
+            const prior = PRIOR_AUDITS * avgMaxPerAudit;
+
+            const by = {};
+            records.forEach(r => { (by[r.supervisor] = by[r.supervisor] || []).push(r); });
+
+            return Object.keys(by).map(name => {
+                const list = by[name];
+                const agg = aggregate(list);
+                // Índice ponderado: acerca al promedio general los resultados con
+                // pocas auditorías, y respeta el puntaje real cuando hay muchas.
+                const weighted = Math.round(((agg.points + globalRatio * prior) / (agg.pointsMax + prior)) * 100);
+                const worst = buildFailStats(list)
+                    .filter(s => s.fails > 0)
+                    .sort((a, b) => b.fails - a.fails || b.failPct - a.failPct)[0] || null;
+                return {
+                    name, list, agg, weighted, worst,
+                    mom: monthOverMonth(list),
+                    conf: confidenceLabel(agg.count),
+                    // Con menos de 3 auditorías no se puede comparar de forma justa:
+                    // esas supervisoras se listan aparte en vez de encabezar el ranking.
+                    eligible: agg.count >= MIN_AUDITS_RANKED
+                };
+            }).sort((a, b) => {
+                if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
+                return b.weighted - a.weighted || b.agg.count - a.agg.count;
+            });
+        }
+
+        /* Supervisora destacada de un periodo concreto (mes o semana más
+           reciente con datos). Exige al menos 2 auditorías para no premiar
+           a quien solo fue evaluada una vez. */
+        function topPerformer(records, scope) {
+            if (!records.length) return null;
+            const keyOf = (r) => scope === 'week'
+                ? r.year * 10000 + r.month * 100 + recWeekOfMonth(r)
+                : r.year * 100 + r.month;
+
+            const groups = {};
+            records.forEach(r => { (groups[keyOf(r)] = groups[keyOf(r)] || []).push(r); });
+            const latestKey = Math.max.apply(null, Object.keys(groups).map(Number));
+            const subset = groups[latestKey];
+
+            const minimo = scope === 'week' ? 2 : MIN_AUDITS_RANKED;
+            const ranked = weightedRanking(subset).filter(s => s.agg.count >= minimo);
+            if (!ranked.length) return null;
+
+            const sample = subset[0];
+            const label = scope === 'week'
+                ? 'Semana ' + recWeekOfMonth(sample) + ' de ' + MONTH_NAMES[sample.month - 1]
+                : MONTH_NAMES[sample.month - 1] + ' ' + sample.year;
+            return { winner: ranked[0], label, total: subset.length, scope };
+        }
+
         function trendCell(mom) {
             if (!mom) return '<span style="color:#94a3b8;">—</span>';
             if (mom.diff > 0) return `<span style="color:#10b981; font-weight:700;">▲ +${mom.diff} pts</span>`;
@@ -2478,44 +2832,70 @@
             else renderSupervisorRanking(records, el, titleEl, hintEl);
         }
 
+        function destacadaCard(top) {
+            if (!top) return '';
+            const w = top.winner;
+            const icono = top.scope === 'week' ? '⭐' : '🏆';
+            const rotulo = top.scope === 'week' ? 'Destacada de la semana' : 'Destacada del mes';
+            return `
+                <div class="destacada ${top.scope}">
+                    <div class="dest-ico">${icono}</div>
+                    <div class="dest-body">
+                        <div class="dest-lbl">${rotulo} · ${top.label}</div>
+                        <div class="dest-name">${escapeHtml(w.name)}</div>
+                        <div class="dest-meta">${w.agg.overall}% acumulado · ${w.agg.count} auditoría(s) · Limpieza ${w.agg.moduleI ?? '--'}% · Mant. ${w.agg.moduleII ?? '--'}%</div>
+                    </div>
+                </div>`;
+        }
+
         function renderSupervisorRanking(records, el, titleEl, hintEl) {
             titleEl.textContent = '👥 Comparativa de Supervisoras';
-            hintEl.textContent = 'Ordenadas por puntaje acumulado del periodo filtrado. Toca una fila para abrir su ficha completa.';
+            hintEl.textContent = 'El orden pondera el puntaje con la cantidad de auditorías: un 100% con una sola visita no supera a un 90% con treinta. Toca una supervisora para ver su ficha.';
 
-            const by = {};
-            records.forEach(r => { (by[r.supervisor] = by[r.supervisor] || []).push(r); });
+            const rows = weightedRanking(records);
+            const mejorMes = topPerformer(records, 'month');
+            const mejorSemana = topPerformer(records, 'week');
 
-            const rows = Object.keys(by).map(name => {
-                const list = by[name];
-                const worst = buildFailStats(list)
-                    .filter(s => s.fails > 0)
-                    .sort((a, b) => b.fails - a.fails || b.failPct - a.failPct)[0] || null;
-                return { name, list, agg: aggregate(list), mom: monthOverMonth(list), worst };
-            }).sort((a, b) => (b.agg.overall ?? -1) - (a.agg.overall ?? -1));
+            const destacadas = (mejorMes || mejorSemana)
+                ? `<div class="dest-wrap">${destacadaCard(mejorMes)}${destacadaCard(mejorSemana)}</div>`
+                : '';
 
-            el.innerHTML = `
-                <div class="table-wrap" style="max-height:none;">
-                    <table class="data-table">
-                        <thead><tr>
-                            <th>#</th><th>Supervisora</th><th>Auditorías</th>
-                            <th>Puntaje acumulado</th><th>Limpieza</th><th>Mantenimiento</th>
-                            <th>vs. mes anterior</th><th>Su punto más débil</th>
-                        </tr></thead>
-                        <tbody>${rows.map((r, i) => `
-                            <tr class="row-click" onclick="focusSupervisor('${escapeAttr(r.name)}')">
-                                <td><span class="rank-pos ${i === 0 ? 'top' : ''}">${i + 1}</span></td>
-                                <td style="font-weight:700;">${escapeHtml(r.name)}</td>
-                                <td>${r.agg.count}</td>
-                                <td><span class="badge" style="background:${scoreColor(r.agg.overall)}">${r.agg.overall}%</span>
-                                    <span style="font-size:0.65rem; color:#94a3b8;">${r.agg.points}/${r.agg.pointsMax}</span></td>
-                                <td>${r.agg.moduleI !== null ? r.agg.moduleI + '%' : '--'}</td>
-                                <td>${r.agg.moduleII !== null ? r.agg.moduleII + '%' : '--'}</td>
-                                <td>${trendCell(r.mom)}</td>
-                                <td style="font-size:0.78rem; color:#64748b;">${r.worst
-                                    ? escapeHtml(r.worst.text) + ' <b style="color:#ef4444;">(' + r.worst.fails + ')</b>'
-                                    : '—'}</td>
-                            </tr>`).join('')}</tbody>
-                    </table>
+            const rankeadas = rows.filter(r => r.eligible);
+            const sinMuestra = rows.filter(r => !r.eligible);
+
+            const tarjeta = (r, pos) => `
+                <div class="rank-card ${pos === null ? 'unranked' : ''}" onclick="focusSupervisor('${escapeAttr(r.name)}')">
+                    <div class="rank-head">
+                        <span class="rank-pos ${pos === 1 ? 'top' : ''}">${pos === null ? '–' : pos}</span>
+                        <span class="rank-name">${escapeHtml(r.name)}</span>
+                        <span class="badge" style="background:${scoreColor(r.agg.overall)}">${r.agg.overall}%</span>
+                    </div>
+                    <div class="fail-bar"><span style="width:${r.agg.overall}%; background:${scoreHex(r.agg.overall)}"></span></div>
+                    <div class="rank-meta">
+                        <span><b>${r.agg.count}</b> auditoría(s)</span>
+                        ${pos === null
+                            ? `<span style="color:#b45309;">Faltan ${MIN_AUDITS_RANKED - r.agg.count} para entrar al ranking</span>`
+                            : `<span>Índice <b>${r.weighted}%</b></span>`}
+                        <span>Confianza <b style="color:${r.conf.color}">${r.conf.txt}</b></span>
+                        <span>🧹 ${r.agg.moduleI !== null ? r.agg.moduleI + '%' : '--'}</span>
+                        <span>🔧 ${r.agg.moduleII !== null ? r.agg.moduleII + '%' : '--'}</span>
+                        <span>${trendCell(r.mom)}</span>
+                    </div>
+                    ${r.worst ? `<div class="rank-weak">Punto más débil: ${escapeHtml(r.worst.text)} <b>(${r.worst.fails})</b></div>` : ''}
+                </div>`;
+
+            el.innerHTML = destacadas + `
+                <div class="rank-list">
+                    ${rankeadas.map((r, i) => tarjeta(r, i + 1)).join('')}
+                </div>
+                ${sinMuestra.length ? `
+                    <div class="block-title" style="font-size:0.85rem; margin-top:1.1rem;">Aún sin muestra suficiente</div>
+                    <div class="block-hint">Necesitan al menos ${MIN_AUDITS_RANKED} auditorías para compararse de forma justa.</div>
+                    <div class="rank-list">${sinMuestra.map(r => tarjeta(r, null)).join('')}</div>` : ''}
+                <div class="block-hint" style="margin-top:1rem;">
+                    <b>Cómo se ordena:</b> el <b>puntaje</b> es el resultado real; el <b>índice</b> lo ajusta según cuántas auditorías lo respaldan.
+                    Así, un 100% de una sola visita no desplaza a un 90% sostenido en treinta.
+                    <b>Confianza</b>: Alta (10+ auditorías), Media (4–9), Baja (3 o menos).
                 </div>`;
         }
 
@@ -2866,6 +3246,13 @@
 
         /* ---------- Captura genérica: monta el HTML VISIBLE y lo exporta ---------- */
         async function exportarPDF(innerHTML, filename) {
+            // La librería de PDF viene de internet: sin conexión no está.
+            // Se avisa con claridad en vez de fallar de forma silenciosa.
+            if (typeof html2pdf !== 'function') {
+                showToast('⚠️ Sin conexión no se puede generar el PDF. Los datos sí quedan guardados; vuelve a intentarlo con internet.', 6000);
+                return;
+            }
+
             const stage = document.getElementById('pdf-stage');
             stage.innerHTML = '<div class="pdf-report" id="pdf-report-content">' + innerHTML + '</div>';
             stage.classList.add('active');
@@ -2998,6 +3385,216 @@
         /* =========================================================
            INFORME ACUMULADO
            ========================================================= */
+        /* ---------- INFORME DE MANTENIMIENTO ---------- */
+        function buildMaintenanceHTML(averias) {
+            const hoy = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+            const masDe7 = averias.filter(a => diasDesde(a.fecha) > 7).length;
+            const habitaciones = new Set(averias.map(a => a.room)).size;
+            const conFoto = averias.filter(a => a.fotos > 0).length;
+
+            // Agrupado por habitación para que mantenimiento haga una sola visita
+            const porHab = {};
+            averias.forEach(a => { (porHab[a.room] = porHab[a.room] || []).push(a); });
+            const habOrden = Object.keys(porHab).sort((a, b) => {
+                const anti = (l) => Math.max.apply(null, porHab[l].map(x => diasDesde(x.fecha)));
+                return anti(b) - anti(a);
+            });
+
+            const filas = habOrden.map(hab => {
+                const lista = porHab[hab].sort((a, b) => b.fecha - a.fecha);
+                return lista.map((a, i) => {
+                    const dias = diasDesde(a.fecha);
+                    const clase = dias > 7 ? 'pdf-urgent' : (dias > 3 ? 'pdf-warn' : '');
+                    return `<tr>
+                        <td style="font-weight:800;">${i === 0 ? escapeHtml(hab) : ''}</td>
+                        <td>${escapeHtml(a.falla)}</td>
+                        <td class="mid-col">${a.fecha.toLocaleDateString('es-ES')}</td>
+                        <td class="mid-col ${clase}">${dias === 0 ? 'Hoy' : dias + ' día' + (dias === 1 ? '' : 's')}</td>
+                        <td>${escapeHtml(a.supervisor)}</td>
+                        <td class="mid-col">${a.fotos > 0 ? '📷 ' + a.fotos : '—'}</td>
+                    </tr>`;
+                }).join('');
+            }).join('');
+
+            return `
+                <div class="pdf-report-header">
+                    <div>
+                        <h1>Informe de Mantenimiento</h1>
+                        <div class="sub">Averías detectadas en auditorías de housekeeping · Emitido el ${hoy}</div>
+                    </div>
+                    <div class="badge-status" style="background:${masDe7 > 0 ? '#ef4444' : '#f59e0b'};">
+                        ${averias.length} AVERÍA${averias.length === 1 ? '' : 'S'}
+                    </div>
+                </div>
+
+                <div class="pdf-kv">
+                    <div class="pdf-kv-item"><div class="k">Averías</div><div class="v">${averias.length}</div><div class="s">pendientes de atender</div></div>
+                    <div class="pdf-kv-item"><div class="k">Habitaciones</div><div class="v">${habitaciones}</div><div class="s">afectadas</div></div>
+                    <div class="pdf-kv-item"><div class="k">Con más de 7 días</div><div class="v" style="color:${masDe7 ? '#b91c1c' : '#10b981'};">${masDe7}</div><div class="s">requieren prioridad</div></div>
+                    <div class="pdf-kv-item"><div class="k">Con evidencia</div><div class="v">${conFoto}</div><div class="s">tienen foto adjunta</div></div>
+                </div>
+
+                <div class="pdf-note">
+                    Listado agrupado por habitación y ordenado por antigüedad, para resolver varias averías en una sola visita.
+                    La columna <b>Antigüedad</b> cuenta desde la auditoría que detectó la falla:
+                    <span class="pdf-urgent">rojo</span> = más de 7 días, <span class="pdf-warn">ámbar</span> = más de 3 días.
+                </div>
+
+                <div class="pdf-section-title">🔧 Averías por Habitación</div>
+                <table class="pdf-table">
+                    <colgroup>
+                        <col style="width:11%"><col style="width:36%"><col style="width:13%">
+                        <col style="width:12%"><col style="width:19%"><col style="width:9%">
+                    </colgroup>
+                    <thead><tr>
+                        <th>Habitación</th><th>Avería detectada</th><th class="mid-col">Fecha</th>
+                        <th class="mid-col">Antigüedad</th><th>Reportado por</th><th class="mid-col">Foto</th>
+                    </tr></thead>
+                    <tbody>${filas}</tbody>
+                </table>
+
+                <div class="pdf-section-title">✅ Control de Ejecución</div>
+                <div class="pdf-note" style="border-left-color:#94a3b8;">
+                    Para cerrar cada avería, anote la fecha de reparación y quién la ejecutó.
+                </div>
+                <table class="pdf-table">
+                    <colgroup><col style="width:11%"><col style="width:44%"><col style="width:15%"><col style="width:30%"></colgroup>
+                    <thead><tr><th>Habitación</th><th>Avería</th><th class="mid-col">Fecha reparación</th><th>Ejecutado por</th></tr></thead>
+                    <tbody>${averias.map(a => `
+                        <tr>
+                            <td style="font-weight:800;">${escapeHtml(a.room)}</td>
+                            <td>${escapeHtml(a.falla)}</td>
+                            <td style="height:22px;"></td>
+                            <td></td>
+                        </tr>`).join('')}</tbody>
+                </table>
+
+                <div class="pdf-footer">Informe de mantenimiento generado automáticamente · Auditoría Integral Housekeeping · ${hoy}</div>`;
+        }
+
+        /* ---------- INFORME DETALLADO DE UNA SUPERVISORA ---------- */
+        function buildSupervisorReportHTML(name, records, period) {
+            const agg = aggregate(records);
+            const mom = monthOverMonth(records);
+            const ordenados = [...records].sort((a, b) => b.ts - a.ts);
+            const habitaciones = new Set(records.map(r => r.room).filter(Boolean)).size;
+            const detalladas = records.filter(r => recItemList(r).length > 0);
+            const itemsDetalle = detalladas.reduce((n, r) => n + recItemList(r).length, 0);
+            const fallos = detalladas.reduce((n, r) => n + recItemList(r).filter(e => e.v === 0).length, 0);
+            const cumplimiento = itemsDetalle > 0 ? Math.round(((itemsDetalle - fallos) / itemsDetalle) * 100) : null;
+            const fotos = records.reduce((n, r) => n + countRecordPhotos(r), 0);
+
+            const stats = buildFailStats(records)
+                .filter(s => s.fails > 0)
+                .sort((a, b) => b.fails - a.fails || b.failPct - a.failPct)
+                .slice(0, 10);
+
+            const sorted = records.slice().sort((a, b) => new Date(a.dateISO) - new Date(b.dateISO));
+            const rango = records.length
+                ? new Date(sorted[0].dateISO).toLocaleDateString('es-ES') + ' — ' + new Date(sorted[sorted.length - 1].dateISO).toLocaleDateString('es-ES')
+                : '—';
+
+            const periodos = groupByPeriod(records, period).slice(-8);
+            const barras = periodos.map(p => {
+                const h = Math.max(4, Math.round((p.avg / 100) * 80));
+                return `<div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; flex:1; min-width:52px;">
+                    <div style="font-size:0.66rem; font-weight:800; color:${scoreHex(p.avg)}; margin-bottom:3px;">${p.avg}%</div>
+                    <div style="width:26px; height:${h}px; background:${scoreHex(p.avg)}; border-radius:4px 4px 0 0;"></div>
+                    <div style="font-size:0.57rem; color:#64748b; margin-top:5px; text-align:center; line-height:1.25;">${p.lbl}</div>
+                    <div style="font-size:0.53rem; color:#94a3b8;">${p.count} aud.</div>
+                </div>`;
+            }).join('');
+
+            const fallosHTML = detalladas.length === 0
+                ? `<div class="pdf-note" style="border-left-color:#f59e0b;">Las auditorías de este periodo se registraron antes de que el sistema guardara el detalle ítem por ítem, por eso no puede desglosarse qué puntos fallaron.</div>`
+                : (stats.length === 0
+                    ? `<div class="pdf-note" style="border-left-color:#10b981;">Sin incumplimientos registrados en el periodo. Desempeño impecable.</div>`
+                    : `<table class="pdf-table">
+                        <colgroup><col style="width:12%"><col style="width:54%"><col style="width:17%"><col style="width:17%"></colgroup>
+                        <thead><tr><th>Módulo</th><th>Punto evaluado</th><th class="mid-col">Veces que falló</th><th class="mid-col">% de fallo</th></tr></thead>
+                        <tbody>${stats.map(s => `
+                            <tr>
+                                <td>${s.mod === 'II' ? 'Mantenim.' : 'Limpieza'}</td>
+                                <td>${escapeHtml(s.text)}</td>
+                                <td class="mid-col"><b>${s.fails}</b> de ${s.evals}</td>
+                                <td class="mid-col" style="color:${s.failPct >= 40 ? '#b91c1c' : '#b45309'}; font-weight:800;">${s.failPct}%</td>
+                            </tr>`).join('')}</tbody>
+                      </table>`);
+
+            return `
+                <div class="pdf-report-header">
+                    <div>
+                        <h1>Desempeño de ${escapeHtml(name)}</h1>
+                        <div class="sub">Periodo: ${rango} · ${agg.count} auditoría(s) · ${habitaciones} habitación(es)</div>
+                    </div>
+                    <div class="badge-status" style="background:${scoreHex(agg.overall)};">${statusLabel(agg.overall)}</div>
+                </div>
+
+                <div class="pdf-gauges">
+                    <div class="pdf-gauge-block">
+                        ${gaugeSVG(agg.overall, 110, scoreHex(agg.overall))}
+                        <div class="pdf-gauge-label">Acumulado</div>
+                        <div class="pdf-gauge-sub">${agg.points}/${agg.pointsMax} pts</div>
+                    </div>
+                    <div class="pdf-gauge-block">
+                        ${gaugeSVG(agg.moduleI, 80, scoreHex(agg.moduleI))}
+                        <div class="pdf-gauge-label">Limpieza</div>
+                        <div class="pdf-gauge-sub">Módulo I</div>
+                    </div>
+                    <div class="pdf-gauge-block">
+                        ${gaugeSVG(agg.moduleII, 80, scoreHex(agg.moduleII))}
+                        <div class="pdf-gauge-label">Mantenimiento</div>
+                        <div class="pdf-gauge-sub">Módulo II</div>
+                    </div>
+                </div>
+
+                <div class="pdf-kv">
+                    <div class="pdf-kv-item"><div class="k">Auditorías</div><div class="v">${agg.count}</div><div class="s">en el periodo</div></div>
+                    <div class="pdf-kv-item"><div class="k">Cumplimiento</div><div class="v" style="color:${cumplimiento !== null ? scoreHex(cumplimiento) : '#94a3b8'};">${cumplimiento !== null ? cumplimiento + '%' : '—'}</div><div class="s">${cumplimiento !== null ? 'de ' + itemsDetalle + ' ítems' : 'sin detalle'}</div></div>
+                    <div class="pdf-kv-item"><div class="k">Incumplimientos</div><div class="v" style="color:${fallos ? '#b91c1c' : '#10b981'};">${detalladas.length ? fallos : '—'}</div><div class="s">puntos fallidos</div></div>
+                    <div class="pdf-kv-item"><div class="k">Tendencia</div><div class="v" style="color:${mom ? (mom.diff > 0 ? '#10b981' : (mom.diff < 0 ? '#b91c1c' : '#64748b')) : '#94a3b8'};">${mom ? (mom.diff > 0 ? '+' : '') + mom.diff + ' pts' : '—'}</div><div class="s">${mom ? mom.prevLabel + ' → ' + mom.curLabel : 'un solo mes'}</div></div>
+                </div>
+
+                <div class="pdf-section-title">📈 Evolución del Desempeño</div>
+                <div style="display:flex; align-items:flex-end; gap:8px; padding:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+                    ${barras || '<span style="color:#94a3b8; font-size:0.8rem;">Sin datos suficientes</span>'}
+                </div>
+
+                <div class="pdf-section-title">🎯 Puntos a Reforzar</div>
+                ${fallosHTML}
+
+                <div class="pdf-section-title">📋 Detalle de Auditorías</div>
+                <table class="pdf-table">
+                    <colgroup>
+                        <col style="width:14%"><col style="width:13%"><col style="width:23%">
+                        <col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:11%">
+                    </colgroup>
+                    <thead><tr>
+                        <th>Fecha</th><th class="mid-col">Habitación</th><th>Auditor</th>
+                        <th class="mid-col">General</th><th class="mid-col">Limpieza</th>
+                        <th class="mid-col">Mantenim.</th><th class="mid-col">Falló</th>
+                    </tr></thead>
+                    <tbody>${ordenados.map(r => {
+                        const its = recItemList(r);
+                        const bad = its.filter(e => e.v === 0).length;
+                        return `<tr>
+                            <td>${new Date(r.dateISO).toLocaleDateString('es-ES')}</td>
+                            <td class="mid-col" style="font-weight:800;">${escapeHtml(r.room || '—')}</td>
+                            <td>${escapeHtml(r.auditor || '—')}</td>
+                            <td class="mid-col" style="color:${scoreHex(r.scoreOverall)}; font-weight:800;">${r.scoreOverall ?? '--'}%</td>
+                            <td class="mid-col">${r.scoreModuleI ?? '--'}%</td>
+                            <td class="mid-col">${r.scoreModuleII ?? '--'}%</td>
+                            <td class="mid-col">${its.length ? (bad > 0 ? '<b style="color:#b91c1c;">' + bad + '</b>' : '0') : '—'}</td>
+                        </tr>`;
+                    }).join('')}</tbody>
+                </table>
+
+                <div class="pdf-footer">
+                    ${fotos} evidencia(s) fotográfica(s) registrada(s) · Informe generado automáticamente ·
+                    Auditoría Integral Housekeeping · ${new Date().toLocaleDateString('es-ES')}
+                </div>`;
+        }
+
         function buildCumulativeHTML(records, period, filterLabel) {
             const total = records.length;
             const AGG = aggregate(records);
@@ -3006,15 +3603,10 @@
             // Agrupado por periodo (tendencia)
             const periodArr = groupByPeriod(records, period).slice(-10);
 
-            // Agrupado por supervisora (ranking)
-            const bySup = {};
-            records.forEach(r => {
-                if (!bySup[r.supervisor]) bySup[r.supervisor] = { name: r.supervisor, items: [] };
-                bySup[r.supervisor].items.push(r);
-            });
-            const supArr = Object.values(bySup)
-                .map(g => ({ name: g.name, agg: aggregate(g.items) }))
-                .sort((a, b) => b.agg.overall - a.agg.overall);
+            // Ranking ponderado: el orden considera cuántas auditorías respaldan
+            // cada puntaje, para que una sola visita perfecta no encabece la lista.
+            const supArr = weightedRanking(records);
+            const averias = maintenanceIssues(records);
 
             const maxBarH = 90;
             const barsHTML = periodArr.map(p => {
@@ -3027,16 +3619,53 @@
                     '<div style="font-size:0.55rem; color:#94a3b8;">' + p.count + ' aud. &middot; ' + p.points + '/' + p.pointsMax + '</div></div>';
             }).join('');
 
-            const rankHTML = supArr.map((g, i) => {
+            const filaRank = (g, pos) => {
                 const val = g.agg.overall;
-                return '<div style="margin-bottom:10px;">' +
-                    '<div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:3px;">' +
-                    '<span>' + (i + 1) + '. ' + escapeHtml(g.name) + ' <span style="color:#94a3b8; font-weight:500;">(' + g.agg.count + ' aud. &middot; ' + g.agg.points + '/' + g.agg.pointsMax + ' pts)</span></span>' +
-                    '<span style="color:' + scoreHex(val) + ';">' + val + '%</span></div>' +
-                    '<div style="background:#e2e8f0; border-radius:5px; height:11px; overflow:hidden;">' +
-                    '<div style="width:' + val + '%; height:100%; background:' + scoreHex(val) + '; border-radius:5px;"></div></div>' +
-                    '<div style="font-size:0.62rem; color:#64748b; margin-top:2px;">Limpieza: ' + (g.agg.moduleI !== null ? g.agg.moduleI + '%' : '--') + ' &middot; Mantenimiento: ' + (g.agg.moduleII !== null ? g.agg.moduleII + '%' : '--') + '</div></div>';
-            }).join('');
+                const debil = g.worst ? ' &middot; Punto débil: ' + escapeHtml(g.worst.text) + ' (' + g.worst.fails + ')' : '';
+                const extra = pos === null
+                    ? ' &middot; sin muestra suficiente'
+                    : ' &middot; Índice ' + g.weighted + '% &middot; Confianza ' + g.conf.txt;
+                return '<div class="pdf-rank-row">' +
+                    '<div class="pdf-rank-pos' + (pos === 1 ? ' top' : '') + '">' + (pos === null ? '–' : pos) + '</div>' +
+                    '<div class="pdf-rank-main">' +
+                        '<div class="pdf-rank-name">' + escapeHtml(g.name) + '</div>' +
+                        '<div class="pdf-rank-sub">' + g.agg.count + ' auditoría(s) &middot; ' + g.agg.points + '/' + g.agg.pointsMax + ' pts' + extra +
+                            ' &middot; Limpieza ' + (g.agg.moduleI !== null ? g.agg.moduleI + '%' : '--') +
+                            ' &middot; Mantenim. ' + (g.agg.moduleII !== null ? g.agg.moduleII + '%' : '--') + debil + '</div>' +
+                        '<div class="pdf-rank-bar"><span style="width:' + val + '%; background:' + scoreHex(val) + ';"></span></div>' +
+                    '</div>' +
+                    '<div class="pdf-rank-score" style="color:' + scoreHex(val) + ';">' + val + '%</div>' +
+                '</div>';
+            };
+            const conMuestra = supArr.filter(g => g.eligible);
+            const sinMuestra = supArr.filter(g => !g.eligible);
+            const rankHTML = conMuestra.map((g, i) => filaRank(g, i + 1)).join('') +
+                (sinMuestra.length
+                    ? '<div style="font-size:0.68rem; font-weight:800; color:#64748b; margin:12px 0 4px;">AÚN SIN MUESTRA SUFICIENTE (mínimo ' + MIN_AUDITS_RANKED + ' auditorías)</div>' +
+                      sinMuestra.map(g => filaRank(g, null)).join('')
+                    : '');
+
+            // Seguimiento de mantenimiento dentro del informe general
+            const habitacionesAveriadas = new Set(averias.map(a => a.room)).size;
+            const averiasViejas = averias.filter(a => diasDesde(a.fecha) > 7).length;
+            const maintHTML = averias.length === 0
+                ? '<div class="pdf-note" style="border-left-color:#10b981;">No se registraron averías de mantenimiento en el periodo.</div>'
+                : '<div class="pdf-note">' + averias.length + ' avería(s) en ' + habitacionesAveriadas + ' habitación(es).' +
+                  (averiasViejas ? ' <span class="pdf-urgent">' + averiasViejas + ' llevan más de 7 días sin atenderse.</span>' : '') +
+                  ' El informe de mantenimiento detallado se descarga por separado desde el historial.</div>' +
+                  '<table class="pdf-table">' +
+                  '<colgroup><col style="width:12%"><col style="width:40%"><col style="width:14%"><col style="width:13%"><col style="width:21%"></colgroup>' +
+                  '<thead><tr><th>Habitación</th><th>Avería</th><th class="mid-col">Fecha</th><th class="mid-col">Antigüedad</th><th>Reportado por</th></tr></thead><tbody>' +
+                  averias.slice(0, 25).map(a => {
+                      const d = diasDesde(a.fecha);
+                      const cls = d > 7 ? 'pdf-urgent' : (d > 3 ? 'pdf-warn' : '');
+                      return '<tr><td style="font-weight:800;">' + escapeHtml(a.room) + '</td>' +
+                             '<td>' + escapeHtml(a.falla) + '</td>' +
+                             '<td class="mid-col">' + a.fecha.toLocaleDateString('es-ES') + '</td>' +
+                             '<td class="mid-col ' + cls + '">' + (d === 0 ? 'Hoy' : d + ' día' + (d === 1 ? '' : 's')) + '</td>' +
+                             '<td>' + escapeHtml(a.supervisor) + '</td></tr>';
+                  }).join('') + '</tbody></table>' +
+                  (averias.length > 25 ? '<div class="pdf-note" style="margin-top:8px;">Se muestran las 25 más recientes de ' + averias.length + '. El informe de mantenimiento incluye todas.</div>' : '');
 
             const periodName = period === 'week' ? 'Semanal' : (period === 'month' ? 'Mensual' : 'Anual');
             const unitName = period === 'week' ? 'Semana' : (period === 'month' ? 'Mes' : 'Año');
@@ -3067,7 +3696,11 @@
                 (barsHTML || '<span style="color:#94a3b8; font-size:0.8rem;">Sin datos</span>') + '</div>' +
 
                 '<div class="pdf-section-title">🏅 Desempeño por Supervisora</div>' +
+                '<div class="pdf-note">El orden pondera el puntaje con la cantidad de auditorías: un resultado alto con una sola visita no supera a uno sostenido en muchas. La <b>confianza</b> indica cuánta evidencia respalda cada puntaje.</div>' +
                 (rankHTML || '<span style="color:#94a3b8; font-size:0.8rem;">Sin datos</span>') +
+
+                '<div class="pdf-section-title">🔧 Seguimiento de Mantenimiento</div>' +
+                maintHTML +
 
                 '<div class="pdf-footer">Informe acumulado generado automáticamente &middot; Auditoría Integral Housekeeping &middot; ' + new Date().toLocaleDateString('es-ES') + '</div>';
         }
@@ -3220,29 +3853,69 @@
             renderPerfPanel();
         }
 
-        function renderCumulativeOnScreen() {
-            const box = document.getElementById('cumulative-report');
-            if (!box) return;
+        /* =========================================================
+           SEGUIMIENTO DE MANTENIMIENTO
+           Cada ítem del Módulo II marcado como "Averiado" se convierte en una
+           línea accionable: qué habitación, qué falla, desde cuándo y quién
+           la reportó. Es lo que mantenimiento necesita para trabajar.
+           ========================================================= */
+        function maintenanceIssues(records) {
+            const out = [];
+            records.forEach(r => {
+                recItemList(r).forEach(e => {
+                    if (e.mod !== 'II' || e.v !== 0) return;
+                    out.push({
+                        ts: r.ts,
+                        fecha: new Date(r.dateISO),
+                        room: r.room || '—',
+                        supervisor: r.supervisor || '—',
+                        auditor: r.auditor || '—',
+                        falla: resolveItemText(e),
+                        fotos: (r.photos && r.photos[e.id]) ? r.photos[e.id].length : 0
+                    });
+                });
+            });
+            return out.sort((a, b) => b.fecha - a.fecha);
+        }
+
+        function diasDesde(fecha) {
+            return Math.max(0, Math.floor((Date.now() - fecha.getTime()) / 86400000));
+        }
+
+        async function generarInformeMantenimiento() {
             const records = getFilteredRecords();
-            const period = document.getElementById('filter-period').value;
-            if (!records.length) {
-                box.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:1.5rem;">No hay evaluaciones que coincidan con los filtros seleccionados.</p>';
+            const averias = maintenanceIssues(records);
+            if (!averias.length) {
+                showToast('No hay averías de mantenimiento registradas con los filtros actuales.', 4000);
                 return;
             }
-            box.innerHTML = buildCumulativeHTML(records, period, describeFilters().replace('Mostrando: ', ''));
+            showToast('⏳ Generando informe de mantenimiento...');
+            const yr = document.getElementById('filter-year').value;
+            const mo = document.getElementById('filter-month').value;
+            const partes = ['Informe_Mantenimiento'];
+            if (mo) partes.push(MONTH_NAMES[parseInt(mo) - 1]);
+            if (yr) partes.push(yr);
+            await exportarPDF(buildMaintenanceHTML(averias), partes.join('_') + '.pdf');
         }
 
         async function generarInformeAcumulado() {
             const records = getFilteredRecords();
             if (!records.length) { showToast('No hay evaluaciones guardadas para generar el informe.'); return; }
             const period = document.getElementById('filter-period').value;
-            showToast('⏳ Generando informe acumulado...');
+            const sup = document.getElementById('filter-supervisor').value;
+            showToast('⏳ Generando informe...');
+
             const yr = document.getElementById('filter-year').value;
             const mo = document.getElementById('filter-month').value;
-            const nameParts = ['Informe_Acumulado'];
-            if (mo) nameParts.push(MONTH_NAMES[parseInt(mo) - 1]);
-            if (yr) nameParts.push(yr);
-            await exportarPDF(buildCumulativeHTML(records, period, describeFilters().replace('Mostrando: ', '')), nameParts.join('_') + '.pdf');
+            const partes = [sup ? 'Informe_' + sup.replace(/\s+/g, '_') : 'Informe_General'];
+            if (mo) partes.push(MONTH_NAMES[parseInt(mo) - 1]);
+            if (yr) partes.push(yr);
+
+            const html = sup
+                ? buildSupervisorReportHTML(sup, records, period)
+                : buildCumulativeHTML(records, period, describeFilters().replace('Mostrando: ', ''));
+
+            await exportarPDF(html, partes.join('_') + '.pdf');
         }
 
         /* =========================================================
