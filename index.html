@@ -620,6 +620,90 @@
         .row-click { cursor: pointer; }
         .row-click:hover { background: #f8fafc; }
 
+        /* ---------- SEVERIDAD DE ÍTEMS ---------- */
+        .checklist-item.sev-critico { border-left: 4px solid #b91c1c; }
+        .checklist-item.sev-leve { border-left: 4px solid #cbd5e1; }
+
+        .sev-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 0.5rem 0 0.25rem;
+        }
+        .sev-row > label {
+            font-size: 0.62rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #94a3b8;
+        }
+        .sev-select {
+            font-family: inherit;
+            font-size: 0.73rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background: #fff;
+            color: #475569;
+            cursor: pointer;
+        }
+        .sev-opt-critico { border-color: #fca5a5; background: #fef2f2; color: #b91c1c; }
+        .sev-opt-leve { color: #94a3b8; }
+        .sev-warn {
+            font-size: 0.63rem;
+            font-weight: 700;
+            color: #b91c1c;
+            background: #fef2f2;
+            border-radius: 4px;
+            padding: 0.15rem 0.4rem;
+        }
+        .no-ocupable {
+            display: inline-block;
+            background: #b91c1c;
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            letter-spacing: 0.02em;
+        }
+        .pdf-critico {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-left: 4px solid #b91c1c;
+            border-radius: 0 8px 8px 0;
+            padding: 11px 14px;
+            margin-bottom: 14px;
+            font-size: 0.78rem;
+            color: #7f1d1d;
+        }
+        .pdf-critico b { color: #b91c1c; }
+
+        /* ---------- ATAJOS DE RANGO DE FECHAS ---------- */
+        .quick-ranges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 0.25rem 0 0.9rem;
+        }
+        .qr-btn {
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-light);
+            background: #fff;
+            color: #475569;
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .qr-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        /* En iOS los input de fecha se ven diminutos sin esto */
+        input[type="date"] { min-height: 44px; -webkit-appearance: none; appearance: none; }
+
         /* ---------- DESTACADA DEL PERIODO ---------- */
         .dest-wrap {
             display: grid;
@@ -1019,6 +1103,24 @@
         /* -------------------------------------
            REPORTE PDF RESUMIDO (generado aparte, no es una copia del formulario)
            ------------------------------------- */
+        /* Durante la captura la hoja debe medir SIEMPRE 780px y quedar pegada
+           al borde izquierdo sin scroll horizontal. Si se deja encoger en un
+           móvil, html2canvas arranca desde una posición negativa y el PDF sale
+           cortado por la izquierda. */
+        #pdf-stage.capturing {
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            justify-content: flex-start;
+        }
+        #pdf-stage.capturing .pdf-report {
+            width: 780px !important;
+            max-width: none !important;
+            min-width: 780px;
+            margin: 0 !important;
+            flex: 0 0 780px;
+        }
+
         .pdf-report {
             width: 780px;
             max-width: 100%;
@@ -1127,6 +1229,9 @@
             overflow-wrap: break-word;
         }
         .pdf-table tr { page-break-inside: avoid; }
+        /* Repite el encabezado cuando la tabla ocupa varias páginas del PDF */
+        .pdf-table thead { display: table-header-group; }
+        .pdf-table tbody { display: table-row-group; }
         .pdf-table .num-col { text-align: right; white-space: nowrap; }
         .pdf-table .mid-col { text-align: center; white-space: nowrap; }
         .pdf-table tbody tr:nth-child(even) td { background: #fafbfc; }
@@ -1356,41 +1461,26 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Año</label>
-                        <select id="filter-year" class="form-control" onchange="renderHistory()">
-                            <option value="">Todos</option>
-                        </select>
+                        <label>Desde</label>
+                        <input type="date" id="filter-from" class="form-control" onchange="renderHistory()">
                     </div>
                     <div class="form-group">
-                        <label>Mes</label>
-                        <select id="filter-month" class="form-control" onchange="renderHistory()">
-                            <option value="">Todos</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Agrupar métricas por</label>
-                        <select id="filter-period" class="form-control" onchange="renderHistory()">
-                            <option value="week">Semana</option>
-                            <option value="month">Mes</option>
-                            <option value="year">Año</option>
-                        </select>
+                        <label>Hasta</label>
+                        <input type="date" id="filter-to" class="form-control" onchange="renderHistory()">
                     </div>
                     <div class="form-group" style="display:flex; align-items:flex-end; gap:0.5rem;">
-                        <button class="btn-outline" onclick="limpiarFiltros()">✖️ Limpiar filtros</button>
-                        <button class="btn-outline" onclick="exportCSV()">⬇️ Exportar CSV</button>
+                        <button class="btn-outline" onclick="limpiarFiltros()">✖️ Limpiar</button>
+                        <button class="btn-outline" onclick="exportCSV()">⬇️ CSV</button>
                     </div>
+                </div>
+
+                <div class="quick-ranges">
+                    <button class="qr-btn" onclick="setRango('7d')">Últimos 7 días</button>
+                    <button class="qr-btn" onclick="setRango('mes')">Este mes</button>
+                    <button class="qr-btn" onclick="setRango('30d')">Últimos 30 días</button>
+                    <button class="qr-btn" onclick="setRango('trim')">Últimos 3 meses</button>
+                    <button class="qr-btn" onclick="setRango('anio')">Este año</button>
+                    <button class="qr-btn" onclick="setRango('todo')">Todo</button>
                 </div>
 
                 <div id="filter-summary" style="font-size:0.85rem; color:#64748b; font-weight:600; margin-bottom:1rem;"></div>
@@ -1640,6 +1730,29 @@
         ].map((text, i) => ({ id: 'm' + (i + 1), text }));
 
         let CONFIG = { supervisors: [], moduleI: [], moduleII: [] };
+
+        /* =========================================================
+           SEVERIDAD DE CADA ÍTEM
+           No todo pesa igual: una mancha de polvo y un aire acondicionado
+           dañado no pueden costar lo mismo. Cada ítem tiene un nivel que
+           define cuántos puntos vale, y los CRÍTICOS además impiden que la
+           habitación se califique como Excelencia: si uno falla, la
+           habitación no está en condiciones de venderse.
+           ========================================================= */
+        const SEVERITIES = {
+            leve:    { peso: 1, txt: 'Leve',    corto: 'LEVE',  color: '#64748b' },
+            normal:  { peso: 2, txt: 'Normal',  corto: 'NORMAL', color: '#0369a1' },
+            critico: { peso: 4, txt: 'Crítico', corto: 'CRÍTICO', color: '#b91c1c' }
+        };
+
+        /* Los ítems antiguos no tienen severidad: se tratan como Normal,
+           que es exactamente el peso que tenían antes (2 puntos). */
+        function itemSev(item) {
+            return (item && SEVERITIES[item.sev]) ? item.sev : 'normal';
+        }
+        function itemPeso(item) {
+            return SEVERITIES[itemSev(item)].peso;
+        }
 
         /* =========================================================
            UTILIDADES
@@ -2076,12 +2189,24 @@
                 ? `<small style="color:var(--danger); font-weight:bold;">🔧 Avería — irá al informe de mantenimiento</small><button type="button" class="action-btn" style="border-color:var(--danger); color:var(--danger);" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Foto de la avería</button>`
                 : `<small>⚠️ Evidencia requerida</small><button type="button" class="action-btn" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Tomar Foto</button>`;
 
+            const sev = itemSev(item);
+            const peso = SEVERITIES[sev].peso;
+
             return `
-                <div class="checklist-item" data-module="${moduleKey}" data-item-id="${item.id}">
+                <div class="checklist-item sev-${sev}" data-module="${moduleKey}" data-item-id="${item.id}" data-sev="${sev}" data-peso="${peso}">
                     <button type="button" class="item-remove" title="Eliminar ítem" onclick="removeItem('${moduleKey}','${item.id}')">🗑️</button>
                     <div class="item-desc">${index}. ${escapeHtml(item.text)}</div>
+                    <div class="sev-row">
+                        <label>Severidad</label>
+                        <select class="sev-select sev-opt-${sev}" onchange="setItemSeverity('${moduleKey}','${escapeAttr(item.id)}', this.value)">
+                            <option value="leve" ${sev === 'leve' ? 'selected' : ''}>Leve · 1 pt</option>
+                            <option value="normal" ${sev === 'normal' ? 'selected' : ''}>Normal · 2 pts</option>
+                            <option value="critico" ${sev === 'critico' ? 'selected' : ''}>Crítico · 4 pts</option>
+                        </select>
+                        ${sev === 'critico' ? '<span class="sev-warn">Si falla, habitación no ocupable</span>' : ''}
+                    </div>
                     <div class="radio-group">
-                        <label class="radio-option"><input type="radio" name="${item.id}" value="2" class="score-input" onchange="updateScore(this)"><span class="radio-label ${labelPos}">${textPos}</span></label>
+                        <label class="radio-option"><input type="radio" name="${item.id}" value="${peso}" class="score-input" onchange="updateScore(this)"><span class="radio-label ${labelPos}">${textPos}</span></label>
                         <label class="radio-option"><input type="radio" name="${item.id}" value="0" class="score-input" onchange="updateScore(this)"><span class="radio-label ${labelNeg}">${textNeg}</span></label>
                     </div>
                     <div class="action-required">${actionSmall}</div>
@@ -2143,6 +2268,20 @@
             });
         }
 
+        async function setItemSeverity(moduleKey, itemId, sev) {
+            if (!SEVERITIES[sev]) return;
+            const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
+            const item = list.find(it => it.id === itemId);
+            if (!item) return;
+            item.sev = sev;
+            await persistModules();
+            renderModules();
+            resetScoreDisplay();
+            showToast('Severidad actualizada: ' + SEVERITIES[sev].txt + ' (' + SEVERITIES[sev].peso + ' pts)' +
+                (sev === 'critico' ? ' — si falla, la habitación queda como no ocupable.' : ''), 4000);
+            pushRemote();
+        }
+
         async function removeItem(moduleKey, itemId) {
             const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
             const item = list.find(it => it.id === itemId);
@@ -2179,45 +2318,62 @@
 
         function getCurrentScores() {
             const allInputs = document.querySelectorAll('.score-input:checked');
-            let totalScore = 0, answered = 0, goodCount = 0, badCount = 0;
-            let moduleTotals = { I: { score: 0, answered: 0 }, II: { score: 0, answered: 0 } };
+            let totalScore = 0, answered = 0, goodCount = 0, badCount = 0, criticalFails = 0;
+            let moduleTotals = { I: { score: 0, max: 0 }, II: { score: 0, max: 0 } };
             const items = [];
 
             allInputs.forEach(input => {
                 answered++;
-                const value = parseInt(input.value);
-                totalScore += value;
-                if (input.value === "2") goodCount++; else badCount++;
                 const card = input.closest('.checklist-item');
                 const mod = card.dataset.module;
+                const sev = card.dataset.sev || 'normal';
+                const peso = parseInt(card.dataset.peso) || 2;   // cuánto vale este ítem
+                const value = parseInt(input.value);             // el peso si cumple, 0 si no
+
+                totalScore += value;
+                if (value > 0) goodCount++; else badCount++;
+                if (value === 0 && sev === 'critico') criticalFails++;
+
                 if (moduleTotals[mod]) {
-                    moduleTotals[mod].answered++;
                     moduleTotals[mod].score += value;
+                    moduleTotals[mod].max += peso;
                 }
 
                 // Detalle ítem por ítem: permite saber exactamente QUÉ falló.
                 // El texto solo se guarda en los que NO cumplen (que es donde
                 // hace falta para el informe); los demás se resuelven por id.
-                const entry = { id: card.dataset.itemId, mod: mod, v: value };
+                const entry = { id: card.dataset.itemId, mod: mod, v: value, w: peso, s: sev };
                 if (value === 0) {
                     entry.t = card.querySelector('.item-desc').textContent.trim().replace(/^\d+\.\s*/, '');
                 }
                 items.push(entry);
             });
 
+            const pointsMax = moduleTotals.I.max + moduleTotals.II.max;
+
             return {
-                answered, goodCount, badCount, items,
-                // Puntos crudos: cada ítem vale 2 pts (Cumple=2, No cumple=0)
+                answered, goodCount, badCount, items, criticalFails,
+                // Cada ítem aporta según su severidad: Leve 1, Normal 2, Crítico 4
                 points: totalScore,
-                pointsMax: answered * 2,
+                pointsMax: pointsMax,
                 pointsI: moduleTotals.I.score,
-                pointsMaxI: moduleTotals.I.answered * 2,
+                pointsMaxI: moduleTotals.I.max,
                 pointsII: moduleTotals.II.score,
-                pointsMaxII: moduleTotals.II.answered * 2,
-                overall: answered > 0 ? Math.round((totalScore / (answered * 2)) * 100) : null,
-                moduleIPct: moduleTotals.I.answered > 0 ? Math.round((moduleTotals.I.score / (moduleTotals.I.answered * 2)) * 100) : null,
-                moduleIIPct: moduleTotals.II.answered > 0 ? Math.round((moduleTotals.II.score / (moduleTotals.II.answered * 2)) * 100) : null
+                pointsMaxII: moduleTotals.II.max,
+                overall: pointsMax > 0 ? Math.round((totalScore / pointsMax) * 100) : null,
+                moduleIPct: moduleTotals.I.max > 0 ? Math.round((moduleTotals.I.score / moduleTotals.I.max) * 100) : null,
+                moduleIIPct: moduleTotals.II.max > 0 ? Math.round((moduleTotals.II.score / moduleTotals.II.max) * 100) : null
             };
+        }
+
+        /* Estado de una auditoría: un fallo crítico manda por encima del %. */
+        function estadoAuditoria(pct, criticalFails) {
+            if (criticalFails > 0) return { txt: 'No ocupable', color: '#b91c1c' };
+            return { txt: statusLabel(pct), color: scoreHex(pct) };
+        }
+        function recCriticals(r) {
+            if (typeof r.criticalFails === 'number') return r.criticalFails;
+            return recItemList(r).filter(e => e.v === 0 && e.s === 'critico').length;
         }
 
         function updateScore(element) {
@@ -2225,10 +2381,10 @@
             const actionDiv = item.querySelector('.action-required');
 
             item.classList.remove('status-good', 'status-bad');
-            if (element.value === "2") {
+            if (parseInt(element.value) > 0) {
                 item.classList.add('status-good');
                 if (actionDiv) actionDiv.classList.remove('active');
-            } else if (element.value === "0") {
+            } else {
                 item.classList.add('status-bad');
                 if (actionDiv) actionDiv.classList.add('active');
             }
@@ -2241,13 +2397,10 @@
                 circle.style.strokeDashoffset = 126 - (126 * s.overall) / 100;
 
                 const statusBox = document.getElementById('score-status-text');
-                if (s.overall >= 90) {
-                    circle.style.stroke = 'var(--success)'; statusBox.innerText = "Excelencia"; statusBox.style.color = 'var(--success)';
-                } else if (s.overall >= 80) {
-                    circle.style.stroke = 'var(--warning)'; statusBox.innerText = "Aceptable"; statusBox.style.color = 'var(--warning)';
-                } else {
-                    circle.style.stroke = 'var(--danger)'; statusBox.innerText = "Riesgo"; statusBox.style.color = 'var(--danger)';
-                }
+                const estado = estadoAuditoria(s.overall, s.criticalFails);
+                circle.style.stroke = estado.color;
+                statusBox.innerText = estado.txt;
+                statusBox.style.color = estado.color;
             }
 
             document.getElementById('score-module-I').innerText = s.moduleIPct !== null ? s.moduleIPct + '%' : '--%';
@@ -2313,6 +2466,7 @@
                 year: dateObj.getFullYear(),
                 // Detalle por ítem (qué cumplió y qué no) + evidencia fotográfica
                 items: s.items,
+                criticalFails: s.criticalFails,
                 photos: JSON.parse(JSON.stringify(PENDING_PHOTOS))
             };
 
@@ -2543,53 +2697,100 @@
 
         const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-        function populateYearFilter() {
-            const sel = document.getElementById('filter-year');
-            const current = sel.value;
-            const years = [...new Set(ALL_RECORDS.map(r => r.year))].sort((a, b) => b - a);
-            sel.innerHTML = '<option value="">Todos</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
-            if (years.includes(parseInt(current))) sel.value = current;
+        /* =========================================================
+           FILTRO POR RANGO DE FECHAS
+           Sustituye a los antiguos selectores de Año / Mes / Agrupar:
+           se elige el periodo exacto en el calendario y la agrupación de
+           las métricas se deduce sola según lo largo que sea el rango.
+           ========================================================= */
+        function fechaLocalISO(d) {
+            const off = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - off).toISOString().slice(0, 10);
+        }
+
+        function getDateRange() {
+            const fv = document.getElementById('filter-from').value;
+            const tv = document.getElementById('filter-to').value;
+            const from = fv ? new Date(fv + 'T00:00:00') : null;
+            const to = tv ? new Date(tv + 'T23:59:59.999') : null;
+            return { from, to };
+        }
+
+        function setRango(tipo) {
+            const hoy = new Date();
+            let desde = null, hasta = hoy;
+            if (tipo === '7d') { desde = new Date(hoy); desde.setDate(hoy.getDate() - 6); }
+            else if (tipo === '30d') { desde = new Date(hoy); desde.setDate(hoy.getDate() - 29); }
+            else if (tipo === 'mes') { desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1); }
+            else if (tipo === 'trim') { desde = new Date(hoy); desde.setMonth(hoy.getMonth() - 3); }
+            else if (tipo === 'anio') { desde = new Date(hoy.getFullYear(), 0, 1); }
+            else if (tipo === 'todo') { desde = null; hasta = null; }
+
+            document.getElementById('filter-from').value = desde ? fechaLocalISO(desde) : '';
+            document.getElementById('filter-to').value = hasta ? fechaLocalISO(hasta) : '';
+            renderHistory();
+        }
+
+        /* La agrupación de la gráfica sale del propio rango elegido. */
+        function autoPeriod() {
+            const { from, to } = getDateRange();
+            let desde = from, hasta = to;
+            if (!desde || !hasta) {
+                const fechas = ALL_RECORDS.map(r => new Date(r.dateISO).getTime());
+                if (!fechas.length) return 'month';
+                desde = desde || new Date(Math.min.apply(null, fechas));
+                hasta = hasta || new Date(Math.max.apply(null, fechas));
+            }
+            const dias = Math.abs(hasta - desde) / 86400000;
+            if (dias <= 45) return 'week';
+            if (dias <= 400) return 'month';
+            return 'year';
+        }
+
+        function periodNameEs(p) {
+            return p === 'week' ? 'semana' : (p === 'month' ? 'mes' : 'año');
         }
 
         function getFilteredRecords() {
             const sup = document.getElementById('filter-supervisor').value;
-            const year = document.getElementById('filter-year').value;
-            const month = document.getElementById('filter-month').value;
+            const { from, to } = getDateRange();
 
             return ALL_RECORDS.filter(r => {
                 if (sup && r.supervisor !== sup) return false;
-                if (year && String(r.year) !== year) return false;
-                if (month && String(r.month) !== month) return false;
+                const d = new Date(r.dateISO);
+                if (from && d < from) return false;
+                if (to && d > to) return false;
                 return true;
             });
         }
 
         function describeFilters() {
             const sup = document.getElementById('filter-supervisor').value;
-            const year = document.getElementById('filter-year').value;
-            const month = document.getElementById('filter-month').value;
+            const { from, to } = getDateRange();
+            const fmt = (d) => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
             const parts = [];
-            if (month) parts.push(MONTH_NAMES[parseInt(month) - 1]);
-            if (year) parts.push(year);
+            if (from && to) parts.push('Del ' + fmt(from) + ' al ' + fmt(to));
+            else if (from) parts.push('Desde el ' + fmt(from));
+            else if (to) parts.push('Hasta el ' + fmt(to));
             if (sup) parts.push('Supervisora: ' + sup);
             return parts.length ? 'Mostrando: ' + parts.join(' · ') : 'Mostrando: todas las evaluaciones registradas';
         }
 
         function limpiarFiltros() {
             document.getElementById('filter-supervisor').value = '';
-            document.getElementById('filter-year').value = '';
-            document.getElementById('filter-month').value = '';
+            document.getElementById('filter-from').value = '';
+            document.getElementById('filter-to').value = '';
             renderHistory();
         }
 
         async function renderHistory() {
             ALL_RECORDS = await fetchAllRecords();
-            populateYearFilter();
 
-            const period = document.getElementById('filter-period').value;
+            const period = autoPeriod();
             const records = getFilteredRecords();
 
-            document.getElementById('filter-summary').textContent = describeFilters() + ' — ' + records.length + ' evaluación(es)';
+            document.getElementById('filter-summary').textContent =
+                describeFilters() + ' — ' + records.length + ' evaluación(es) · métricas agrupadas por ' + periodNameEs(period);
 
             // Stat cards
             const total = records.length;
@@ -2608,13 +2809,14 @@
                 const its = recItemList(r);
                 const bad = its.filter(e => e.v === 0).length;
                 const ph = countRecordPhotos(r);
+                const crit = recCriticals(r);
                 return `
                 <tr class="row-click" onclick="openAuditDetail(${r.ts})">
                     <td>${new Date(r.dateISO).toLocaleDateString('es-ES')}</td>
                     <td>Sem ${recWeekOfMonth(r)}</td>
                     <td>${r.month}</td>
                     <td>${r.year}</td>
-                    <td>${escapeHtml(r.room)}</td>
+                    <td>${escapeHtml(r.room)}${crit > 0 ? ' <span class="no-ocupable">NO OCUPABLE</span>' : ''}</td>
                     <td>${escapeHtml(r.supervisor)}</td>
                     <td>${escapeHtml(r.auditor)}</td>
                     <td><span class="badge" style="background:${scoreColor(r.scoreOverall)}">${r.scoreOverall ?? '--'}%</span></td>
@@ -3024,7 +3226,8 @@
            DETALLE COMPLETO DE UNA AUDITORÍA (modal)
            ========================================================= */
         function renderModalItem(entry, photoIds) {
-            const chip = `<span class="mod-chip chip-${entry.mod}">${entry.mod === 'II' ? 'MANTENIMIENTO' : 'LIMPIEZA'}</span>`;
+            const chip = `<span class="mod-chip chip-${entry.mod}">${entry.mod === 'II' ? 'MANTENIMIENTO' : 'LIMPIEZA'}</span>` +
+                (entry.s === 'critico' && entry.v === 0 ? ' <span class="no-ocupable">CRÍTICO</span> ' : '');
             const photos = photoIds.length
                 ? `<div class="am-photos">${photoIds.map(id =>
                     `<div class="am-photo"><img data-photo="${escapeHtml(id)}" alt="Evidencia" onclick="openPhotoViewer('${escapeAttr(id)}')"></div>`
@@ -3041,8 +3244,10 @@
             if (!rec) return;
 
             const d = new Date(rec.dateISO);
+            const criticos = recCriticals(rec);
             document.getElementById('am-title').textContent =
-                'Habitación ' + (rec.room || '—') + ' · ' + (rec.scoreOverall ?? '--') + '%';
+                'Habitación ' + (rec.room || '—') + ' · ' + (rec.scoreOverall ?? '--') + '%' +
+                (criticos > 0 ? ' · NO OCUPABLE' : '');
             document.getElementById('am-sub').textContent =
                 d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) +
                 ' · Supervisora: ' + (rec.supervisor || '—') +
@@ -3053,7 +3258,11 @@
             const good = items.filter(e => e.v === 2);
             const photos = rec.photos || {};
 
-            let html = `
+            let html = (criticos > 0 ? `
+                <div class="fail-empty" style="background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; margin-bottom:0.8rem;">
+                    ⛔ <b>Habitación no ocupable.</b> Falló ${criticos} punto(s) crítico(s). No debe asignarse
+                    hasta que mantenimiento lo resuelva, sin importar el puntaje.
+                </div>` : '') + `
                 <div class="sup-kpis" style="margin-bottom:0.5rem;">
                     <div class="sup-kpi"><div class="num" style="color:${scoreHex(rec.scoreOverall)}">${rec.scoreOverall ?? '--'}%</div><div class="lbl">General</div><div class="sub">${rec.points ?? 0}/${rec.pointsMax ?? 0} pts</div></div>
                     <div class="sup-kpi"><div class="num">${rec.scoreModuleI ?? '--'}%</div><div class="lbl">Limpieza</div></div>
@@ -3192,14 +3401,25 @@
                     ${photoEntries.map(src => `<img src="${src}" style="width:150px; height:150px; object-fit:cover; border:1px solid #e2e8f0; border-radius:6px;">`).join('')}
                 </div>` : '';
 
+            const criticos = record.criticalFails || 0;
+            const estado = estadoAuditoria(record.scoreOverall, criticos);
+            const criticosHTML = criticos > 0 ? `
+                <div class="pdf-critico">
+                    <b>⛔ HABITACIÓN NO OCUPABLE.</b> Se detectaron ${criticos} fallo(s) en puntos clasificados como
+                    <b>críticos</b>. La habitación no debe asignarse a ningún huésped hasta que mantenimiento los resuelva,
+                    independientemente del puntaje obtenido.
+                </div>` : '';
+
             return `
                 <div class="pdf-report-header">
                     <div>
                         <h1>Reporte de Auditoría — Habitación ${escapeHtml(record.room)}</h1>
                         <div class="sub">${dateStr} · ${timeStr} · Semana ${record.week} / ${record.year}</div>
                     </div>
-                    <div class="badge-status" style="background:${scoreHex(record.scoreOverall)};">${statusLabel(record.scoreOverall)}</div>
+                    <div class="badge-status" style="background:${estado.color};">${estado.txt}</div>
                 </div>
+
+                ${criticosHTML}
 
                 <div class="pdf-meta-grid">
                     <div class="pdf-meta-item"><div class="lbl">Supervisora</div><div class="val">${escapeHtml(record.supervisor)}</div></div>
@@ -3212,7 +3432,7 @@
                     <div class="pdf-gauge-block">
                         ${gaugeSVG(record.scoreOverall, 110, scoreHex(record.scoreOverall))}
                         <div class="pdf-gauge-label">General</div>
-                        <div class="pdf-gauge-sub">${statusLabel(record.scoreOverall)}</div>
+                        <div class="pdf-gauge-sub" style="color:${estado.color}; font-weight:700;">${estado.txt}</div>
                     </div>
                     <div class="pdf-gauge-block">
                         ${gaugeSVG(record.scoreModuleI, 80, scoreHex(record.scoreModuleI))}
@@ -3255,7 +3475,14 @@
 
             const stage = document.getElementById('pdf-stage');
             stage.innerHTML = '<div class="pdf-report" id="pdf-report-content">' + innerHTML + '</div>';
-            stage.classList.add('active');
+            stage.classList.add('active', 'capturing');
+
+            // Sin desplazamientos: cualquier scroll (de la página o del propio
+            // contenedor) hace que la captura empiece corrida y recorte la hoja.
+            const scrollPrevio = window.scrollY;
+            window.scrollTo(0, 0);
+            stage.scrollTop = 0;
+            stage.scrollLeft = 0;
 
             const target = document.getElementById('pdf-report-content');
 
@@ -3270,11 +3497,26 @@
 
             await new Promise(r => setTimeout(r, 300));
 
+            // Se fija el ancho exacto de la hoja y se anula cualquier
+            // desplazamiento, para que en un teléfono la captura no empiece
+            // en una posición negativa y recorte el contenido.
+            const anchoHoja = target.offsetWidth || 780;
             const opt = {
                 margin: [0.4, 0.4, 0.4, 0.4],
                 filename: filename,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 900 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    scrollX: 0,
+                    scrollY: 0,
+                    x: 0,
+                    y: 0,
+                    width: anchoHoja,
+                    windowWidth: anchoHoja + 40
+                },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'] }
             };
@@ -3285,8 +3527,9 @@
                 console.error('Error generando PDF', e);
                 showToast('Hubo un problema generando el PDF.');
             } finally {
-                stage.classList.remove('active');
+                stage.classList.remove('active', 'capturing');
                 stage.innerHTML = '';
+                window.scrollTo(0, scrollPrevio);
             }
         }
 
@@ -3366,6 +3609,13 @@
                 supervisor: document.getElementById('supervisor_name').value || '(sin especificar)',
                 comments: document.getElementById('observaciones').value || '',
                 answered: s.answered,
+                // Faltaban los puntos: por eso el PDF mostraba "(0/0 pts)".
+                points: s.points,
+                pointsMax: s.pointsMax,
+                pointsI: s.pointsI,
+                pointsMaxI: s.pointsMaxI,
+                pointsII: s.pointsII,
+                pointsMaxII: s.pointsMaxII,
                 scoreOverall: s.overall,
                 scoreModuleI: s.moduleIPct,
                 scoreModuleII: s.moduleIIPct,
@@ -3890,32 +4140,31 @@
                 return;
             }
             showToast('⏳ Generando informe de mantenimiento...');
-            const yr = document.getElementById('filter-year').value;
-            const mo = document.getElementById('filter-month').value;
-            const partes = ['Informe_Mantenimiento'];
-            if (mo) partes.push(MONTH_NAMES[parseInt(mo) - 1]);
-            if (yr) partes.push(yr);
-            await exportarPDF(buildMaintenanceHTML(averias), partes.join('_') + '.pdf');
+            await exportarPDF(buildMaintenanceHTML(averias), nombreArchivo('Informe_Mantenimiento'));
+        }
+
+        /* El nombre del archivo lleva el rango de fechas elegido. */
+        function nombreArchivo(base) {
+            const { from, to } = getDateRange();
+            const partes = [base];
+            if (from) partes.push(fechaLocalISO(from));
+            if (to) partes.push('a', fechaLocalISO(to));
+            if (!from && !to) partes.push('completo');
+            return partes.join('_') + '.pdf';
         }
 
         async function generarInformeAcumulado() {
             const records = getFilteredRecords();
             if (!records.length) { showToast('No hay evaluaciones guardadas para generar el informe.'); return; }
-            const period = document.getElementById('filter-period').value;
+            const period = autoPeriod();
             const sup = document.getElementById('filter-supervisor').value;
             showToast('⏳ Generando informe...');
-
-            const yr = document.getElementById('filter-year').value;
-            const mo = document.getElementById('filter-month').value;
-            const partes = [sup ? 'Informe_' + sup.replace(/\s+/g, '_') : 'Informe_General'];
-            if (mo) partes.push(MONTH_NAMES[parseInt(mo) - 1]);
-            if (yr) partes.push(yr);
 
             const html = sup
                 ? buildSupervisorReportHTML(sup, records, period)
                 : buildCumulativeHTML(records, period, describeFilters().replace('Mostrando: ', ''));
 
-            await exportarPDF(html, partes.join('_') + '.pdf');
+            await exportarPDF(html, nombreArchivo(sup ? 'Informe_' + sup.replace(/\s+/g, '_') : 'Informe_General'));
         }
 
         /* =========================================================
