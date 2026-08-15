@@ -1067,11 +1067,20 @@
 
     <script>
         /* =========================================================
+           CLAVES COMPARTIDAS DE SESIÓN DEL PIN
+           (usadas por el candado y por la sincronización con la nube)
+           ========================================================= */
+        const PIN_SESSION_KEY = 'auditoria_pin_ok';
+        const PIN_VALUE_KEY = 'auditoria_pin_value';
+        function getAppPin() {
+            try { return sessionStorage.getItem(PIN_VALUE_KEY) || ''; } catch (e) { return ''; }
+        }
+
+        /* =========================================================
            PIN DE SEGURIDAD
            ========================================================= */
         (function () {
             const VALID_PINS = ['6284', '1121', '4980'];
-            const SESSION_KEY = 'auditoria_pin_ok';
 
             const overlay = document.getElementById('pin-lock-overlay');
             const appRoot = document.getElementById('app-root');
@@ -1084,10 +1093,17 @@
                 dots.forEach((d, i) => d.classList.toggle('filled', i < entered.length));
             }
 
-            function unlock() {
-                sessionStorage.setItem(SESSION_KEY, '1');
+            function unlock(triggerSync) {
+                sessionStorage.setItem(PIN_SESSION_KEY, '1');
+                sessionStorage.setItem(PIN_VALUE_KEY, entered);
                 overlay.style.display = 'none';
                 appRoot.classList.remove('pin-locked');
+                // triggerSync solo se activa cuando el PIN se acaba de teclear
+                // (no en el auto-desbloqueo de sesión), para evitar llamar a
+                // funciones que todavía no existen mientras el script se carga.
+                if (triggerSync && typeof onAppUnlocked === 'function') {
+                    onAppUnlocked();
+                }
             }
 
             function showError() {
@@ -1107,7 +1123,7 @@
                 renderDots();
                 if (entered.length === 4) {
                     if (VALID_PINS.includes(entered)) {
-                        unlock();
+                        unlock(true);
                     } else {
                         showError();
                     }
@@ -1133,8 +1149,8 @@
                 else if (e.key === 'Backspace') document.getElementById('pin-back-btn').click();
             });
 
-            if (sessionStorage.getItem(SESSION_KEY) === '1') {
-                unlock();
+            if (sessionStorage.getItem(PIN_SESSION_KEY) === '1') {
+                unlock(false);
             }
         })();
 
@@ -1614,6 +1630,154 @@
             }
         }
 
+        /* =========================================================
+           SINCRONIZACIÓN CON LA NUBE (Cloudflare Pages Functions + KV)
+           Comparte el historial entre todos los dispositivos que usen
+           la misma URL. Si la función /api/data no existe (por ejemplo,
+           al abrir la copia en GitHub Pages) todo sigue funcionando
+           solo con almacenamiento local, sin romper nada.
+           ========================================================= */
+        const REMOTE_URL = '/api/data';
+        let remoteConfirmedOnce = false;
+
+        async function fetchRemoteRead() {
+            const res = await fetch(REMOTE_URL, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: { 'X-App-Pin': getAppPin() }
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return await res.json();
+        }
+
+        async function loadRemoteDetailed() {
+            try {
+                const json = await fetchRemoteRead();
+                if (json && typeof json.value === 'string') {
+                    if (json.value.trim() === '') return { ok: true, data: null };
+                    const d = JSON.parse(json.value);
+                    return { ok: true, data: d };
+                }
+                return { ok: false, data: null };
+            } catch (e) {
+                return { ok: false, data: null };
+            }
+        }
+
+        /* Combina por ts (marca de tiempo): nunca se pierde un registro
+           que exista en alguno de los dos lados. */
+        function mergeRecordsByTs(remoteArr, localArr) {
+            const map = new Map();
+            (remoteArr || []).forEach(r => { if (r && r.ts) map.set(r.ts, r); });
+            (localArr || []).forEach(r => { if (r && r.ts) map.set(r.ts, r); });
+            return Array.from(map.values());
+        }
+
+        function mergeSupervisorLists(remoteList, localList) {
+            return Array.from(new Set([...(remoteList || []), ...(localList || [])]));
+        }
+
+        /* Trae lo último de la nube y lo fusiona con lo que hay en este
+           dispositivo (nunca borra nada, solo suma). */
+        async function pullRemote() {
+            if (!getAppPin()) return false;
+            const remote = await loadRemoteDetailed();
+            if (!remote.ok) return false;
+            remoteConfirmedOnce = true;
+            if (!remote.data) return false;
+
+            const localRecords = await fetchAllRecords();
+            const mergedRecords = mergeRecordsByTs(remote.data.records, localRecords);
+            let changed = mergedRecords.length !== localRecords.length;
+            for (const rec of mergedRecords) {
+                await storageSetJSON('audit:' + rec.ts, rec);
+            }
+
+            const mergedSupervisors = mergeSupervisorLists(remote.data.supervisors, CONFIG.supervisors);
+            if (mergedSupervisors.length !== CONFIG.supervisors.length) {
+                changed = true;
+                CONFIG.supervisors = mergedSupervisors;
+                await persistSupervisors();
+            }
+            return changed;
+        }
+
+        /* Sube el estado combinado (local + lo último de la nube) para
+           no pisar cambios hechos desde otro dispositivo. */
+        async function pushRemote() {
+            const pin = getAppPin();
+            if (!pin) return false;
+            try {
+                const remote = await loadRemoteDetailed();
+                if (remote.ok) remoteConfirmedOnce = true;
+
+                const localRecords = await fetchAllRecords();
+                const mergedRecords = remote.ok && remote.data
+                    ? mergeRecordsByTs(remote.data.records, localRecords)
+                    : localRecords;
+                const mergedSupervisors = remote.ok && remote.data
+                    ? mergeSupervisorLists(remote.data.supervisors, CONFIG.supervisors)
+                    : CONFIG.supervisors;
+
+                const payload = {
+                    supervisors: mergedSupervisors,
+                    moduleI: CONFIG.moduleI,
+                    moduleII: CONFIG.moduleII,
+                    records: mergedRecords
+                };
+
+                const res = await fetch(REMOTE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8', 'X-App-Pin': pin },
+                    body: JSON.stringify(payload)
+                });
+                const txt = await res.text();
+                let parsed = null;
+                try { parsed = JSON.parse(txt); } catch (e) { /* respuesta no-JSON */ }
+
+                if (res.ok && parsed && parsed.ok) {
+                    // Refleja localmente lo fusionado por si la nube tenía
+                    // algo que este dispositivo aún no tenía.
+                    for (const rec of mergedRecords) {
+                        await storageSetJSON('audit:' + rec.ts, rec);
+                    }
+                    if (mergedSupervisors.length !== CONFIG.supervisors.length) {
+                        CONFIG.supervisors = mergedSupervisors;
+                        await persistSupervisors();
+                    }
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error('Error sincronizando con la nube', e);
+                return false;
+            }
+        }
+
+        /* Se dispara justo después de teclear un PIN correcto. */
+        async function onAppUnlocked() {
+            const changed = await pullRemote();
+            renderSupervisors();
+            const historyActive = document.getElementById('view-history').classList.contains('active');
+            if (historyActive) await renderHistory();
+            if (changed) showToast('🔄 Historial sincronizado con la nube.', 3000);
+        }
+
+        /* Revisa cada cierto tiempo si hay cambios hechos desde otro
+           dispositivo mientras se está viendo el Historial. */
+        setInterval(async () => {
+            if (!getAppPin()) return;
+            const appRootEl = document.getElementById('app-root');
+            if (appRootEl.classList.contains('pin-locked')) return;
+            const historyActive = document.getElementById('view-history').classList.contains('active');
+            if (!historyActive) return;
+            const changed = await pullRemote();
+            if (changed) {
+                await renderHistory();
+                showToast('🔄 Datos actualizados por otra persona.', 3000);
+            }
+        }, 20000);
+
         function periodLabel(rec, period) {
             const shortMonths = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
             if (period === 'week') return `Sem ${recWeekOfMonth(rec)} · ${shortMonths[rec.month - 1]} ${rec.year}`;
@@ -1930,6 +2094,13 @@
 
             showToast('✅ Evaluación guardada (Hab. ' + record.room + ' — ' + record.scoreOverall + '%). Revisa la pestaña "Historial y Métricas".', 5000);
             limpiarFormulario(true);
+
+            // Sube el registro a la nube para que se vea desde otros dispositivos.
+            // Si falla (sin internet, o abierto desde GitHub Pages sin backend),
+            // el registro ya quedó guardado localmente sin problema.
+            pushRemote().then(ok => {
+                if (ok) showToast('☁️ Sincronizado con la nube.', 2500);
+            });
         }
 
         /* ---------- BOTÓN 2: Generar reporte PDF (no guarda nada) ---------- */
@@ -2238,6 +2409,14 @@
                 await DB.delete('__test__');
             } catch (e) {
                 showToast('⚠️ Este navegador está bloqueando el almacenamiento (modo privado/incógnito). Las evaluaciones no se podrán guardar.', 8000);
+            }
+
+            // Si ya se había ingresado el PIN antes en esta sesión (recarga
+            // de página), sincroniza con la nube sin pedirlo de nuevo.
+            if (sessionStorage.getItem(PIN_SESSION_KEY) === '1' && getAppPin()) {
+                const changed = await pullRemote();
+                renderSupervisors();
+                if (changed) showToast('🔄 Historial sincronizado con la nube.', 3000);
             }
         }
 
