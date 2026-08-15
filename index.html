@@ -458,6 +458,240 @@
         }
         .action-btn:hover { background-color: var(--danger); color: white; }
 
+        /* ---------- EVIDENCIA FOTOGRÁFICA ---------- */
+        .evidence-bar {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .evi-add {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.7rem;
+            background: #f1f5f9;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .evi-add:hover { background: #e2e8f0; color: var(--primary); }
+        .evi-add[disabled] { opacity: 0.55; cursor: progress; }
+
+        .evi-thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .evi-thumbs:empty { display: none; }
+        .evi-thumb {
+            position: relative;
+            width: 62px;
+            height: 62px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            background: #f8fafc;
+        }
+        .evi-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+        .evi-thumb .evi-del {
+            position: absolute;
+            top: 2px; right: 2px;
+            width: 18px; height: 18px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(15,23,42,0.75);
+            color: #fff;
+            font-size: 0.7rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .evi-thumb.uploading::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.65) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9' fill='none' stroke='%230f172a' stroke-width='3' stroke-linecap='round' stroke-dasharray='40 20'><animateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='0.9s' repeatCount='indefinite'/></circle></svg>") center/22px no-repeat;
+        }
+        .evi-count {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        /* ---------- FICHA DE SUPERVISORA ---------- */
+        .sup-hero {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.25rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f8fafc, #eef2f7);
+            border: 1px solid var(--border-light);
+            margin-bottom: 1.25rem;
+        }
+        .sup-hero-id { flex: 1 1 220px; }
+        .sup-hero-id .name { font-size: 1.35rem; font-weight: 800; color: var(--primary); }
+        .sup-hero-id .meta { font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 0.2rem; }
+        .sup-verdict {
+            display: inline-block;
+            margin-top: 0.6rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .sup-kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .sup-kpi {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.85rem;
+            text-align: center;
+        }
+        .sup-kpi .num { font-size: 1.45rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+        .sup-kpi .lbl { font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 0.2rem; }
+        .sup-kpi .sub { font-size: 0.65rem; color: #94a3b8; margin-top: 0.15rem; }
+
+        .block-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 1.5rem 0 0.35rem;
+        }
+        .block-hint { font-size: 0.78rem; color: #64748b; margin-bottom: 0.75rem; }
+
+        .fail-row {
+            display: grid;
+            grid-template-columns: 1fr 110px 92px;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .fail-row:last-child { border-bottom: none; }
+        .fail-txt { font-size: 0.85rem; color: #334155; }
+        .fail-txt .mod-chip {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 800;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            margin-right: 0.45rem;
+            vertical-align: middle;
+            letter-spacing: 0.02em;
+        }
+        .chip-I { background: #e0f2fe; color: #0369a1; }
+        .chip-II { background: #fef3c7; color: #b45309; }
+        .fail-bar { height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+        .fail-bar span { display: block; height: 100%; border-radius: 999px; }
+        .fail-num { font-size: 0.78rem; font-weight: 700; text-align: right; color: #475569; }
+        .fail-empty {
+            padding: 1rem;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            color: #047857;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .rank-pos {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 800;
+        }
+        .rank-pos.top { background: #fef3c7; color: #b45309; }
+
+        .row-click { cursor: pointer; }
+        .row-click:hover { background: #f8fafc; }
+
+        /* ---------- MODAL DE DETALLE DE AUDITORÍA ---------- */
+        .audit-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.6);
+            z-index: 9000;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        .audit-modal.open { display: block; }
+        .audit-modal-box {
+            background: #fff;
+            border-radius: 12px;
+            max-width: 780px;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        .audit-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.1rem 1.25rem;
+            background: var(--primary);
+            color: #fff;
+        }
+        .audit-modal-head h3 { font-size: 1.05rem; margin: 0; }
+        .audit-modal-head .sub { font-size: 0.78rem; opacity: 0.85; margin-top: 0.2rem; }
+        .audit-modal-close {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .audit-modal-body { padding: 1.25rem; }
+        .am-photos { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+        .am-photo {
+            width: 110px; height: 110px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            background: #f8fafc;
+        }
+        .am-photo img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+        .am-item {
+            padding: 0.7rem 0.85rem;
+            border-radius: 8px;
+            margin-bottom: 0.6rem;
+            border: 1px solid var(--border-light);
+        }
+        .am-item.bad { background: #fef2f2; border-color: #fecaca; }
+        .am-item.good { background: #f8fafc; }
+        .am-item .t { font-size: 0.85rem; color: #334155; font-weight: 600; }
+
+        /* Visor de foto a pantalla completa */
+        .photo-viewer {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 9500;
+            cursor: zoom-out;
+        }
+        .photo-viewer.open { display: flex; align-items: center; justify-content: center; }
+        .photo-viewer img { max-width: 94%; max-height: 94%; object-fit: contain; }
+
         .add-item-card {
             background: #f8fafc;
             border: 2px dashed var(--border-light);
@@ -801,7 +1035,7 @@
             .container { padding-bottom: 0; max-width: 100%; padding: 0; }
             .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 1rem; }
             .section-title { background-color: #f1f5f9; color: #0f172a; border-bottom: 2px solid #0f172a; }
-            .action-btn, .add-item-card, .item-remove { display: none !important; }
+            .action-btn, .add-item-card, .item-remove, .evi-add, .evi-del { display: none !important; }
             .action-required.active { border: none; padding: 0; background: none; text-align: left; }
             .action-required.active small { color: #000; font-style: italic; }
 
@@ -996,6 +1230,15 @@
                 <div class="stat-cards" id="stat-cards"></div>
             </div>
 
+            <!-- FICHA / COMPARATIVA DE SUPERVISORAS -->
+            <div class="card">
+                <h2 class="section-title" style="background-color:#7c3aed;">
+                    <span id="sup-panel-title">👤 Evaluación de la Supervisora</span>
+                </h2>
+                <p class="section-subtitle" id="sup-panel-hint">Selecciona una supervisora en el filtro de arriba para ver su ficha completa.</p>
+                <div id="sup-panel"></div>
+            </div>
+
             <!-- PANEL DE DESEMPEÑO ACUMULADO -->
             <div class="card">
                 <h2 class="section-title" style="background-color:#0f766e;">
@@ -1029,7 +1272,7 @@
                 <h3 style="color:var(--primary); font-size:1rem;">Registro Detallado</h3>
                 <div class="table-wrap">
                     <table class="data-table" id="detail-table">
-                        <thead><tr><th>Fecha</th><th>Semana del mes</th><th>Mes</th><th>Año</th><th>Habitación</th><th>Supervisora</th><th>Auditor</th><th>Puntaje</th><th></th></tr></thead>
+                        <thead><tr><th>Fecha</th><th>Semana del mes</th><th>Mes</th><th>Año</th><th>Habitación</th><th>Supervisora</th><th>Auditor</th><th>Puntaje</th><th>No cumplen</th><th>Evidencia</th><th></th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -1063,6 +1306,25 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <!-- Detalle completo de una auditoría (qué falló + evidencia) -->
+    <div class="audit-modal" id="audit-modal" onclick="if(event.target===this) closeAuditDetail()">
+        <div class="audit-modal-box">
+            <div class="audit-modal-head">
+                <div>
+                    <h3 id="am-title">Detalle de la auditoría</h3>
+                    <div class="sub" id="am-sub"></div>
+                </div>
+                <button type="button" class="audit-modal-close" onclick="closeAuditDetail()">✕</button>
+            </div>
+            <div class="audit-modal-body" id="am-body"></div>
+        </div>
+    </div>
+
+    <!-- Visor de foto a pantalla completa -->
+    <div class="photo-viewer" id="photo-viewer" onclick="closePhotoViewer()">
+        <img id="photo-viewer-img" alt="Evidencia fotográfica">
+    </div>
     </div> <!-- /#app-root -->
 
     <script>
@@ -1095,7 +1357,13 @@
 
             function unlock(triggerSync) {
                 sessionStorage.setItem(PIN_SESSION_KEY, '1');
-                sessionStorage.setItem(PIN_VALUE_KEY, entered);
+                // Solo sobreescribe el PIN guardado si se acaba de teclear uno
+                // (entered no vacío). En el auto-desbloqueo al recargar la
+                // página, "entered" está vacío por defecto -- no debe borrar
+                // el PIN que ya estaba guardado de la sesión anterior.
+                if (entered) {
+                    sessionStorage.setItem(PIN_VALUE_KEY, entered);
+                }
                 overlay.style.display = 'none';
                 appRoot.classList.remove('pin-locked');
                 // triggerSync solo se activa cuando el PIN se acaba de teclear
@@ -1387,6 +1655,175 @@
         }
 
         /* =========================================================
+           EVIDENCIA FOTOGRÁFICA
+           La foto se comprime en el propio teléfono y se sube a la nube
+           (/api/photo). En el registro de la auditoría solo se guarda el
+           identificador, así la sincronización sigue siendo ligera y
+           cualquier dispositivo con PIN puede ver la evidencia.
+           ========================================================= */
+        const PHOTO_URL = '/api/photo';
+        const MAX_PHOTO_DIM = 1200;
+        const PHOTO_QUALITY = 0.6;
+        const MAX_PHOTOS_PER_ITEM = 4;
+
+        /* Fotos de la auditoría que se está llenando: { itemId: [photoId, ...] } */
+        let PENDING_PHOTOS = {};
+        /* Caché en memoria de fotos ya descargadas: { photoId: dataUrl } */
+        const PHOTO_CACHE = {};
+        let PHOTO_INPUT = null;
+
+        function countPendingPhotos() {
+            return Object.keys(PENDING_PHOTOS).reduce((n, k) => n + PENDING_PHOTOS[k].length, 0);
+        }
+
+        /* Redimensiona y comprime antes de subir: una foto de 4 MB del móvil
+           queda en ~150 KB sin perder legibilidad. */
+        async function compressImage(file) {
+            let source;
+            try {
+                source = await createImageBitmap(file, { imageOrientation: 'from-image' });
+            } catch (e) {
+                source = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const url = URL.createObjectURL(file);
+                    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+                    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('formato no soportado')); };
+                    img.src = url;
+                });
+            }
+            const w0 = source.width, h0 = source.height;
+            const scale = Math.min(1, MAX_PHOTO_DIM / Math.max(w0, h0));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(w0 * scale));
+            canvas.height = Math.max(1, Math.round(h0 * scale));
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+            if (source.close) source.close();
+            return canvas.toDataURL('image/jpeg', PHOTO_QUALITY);
+        }
+
+        async function uploadPhoto(dataUrl) {
+            const pin = getAppPin();
+            if (!pin) throw new Error('sesión sin PIN');
+            const res = await fetch(PHOTO_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8', 'X-App-Pin': pin },
+                body: dataUrl
+            });
+            const txt = await res.text();
+            let parsed = null;
+            try { parsed = JSON.parse(txt); } catch (e) { /* respuesta no-JSON */ }
+            if (!res.ok || !parsed || !parsed.ok) {
+                throw new Error(parsed && parsed.error ? parsed.error : 'HTTP ' + res.status);
+            }
+            return parsed.id;
+        }
+
+        async function loadPhoto(photoId) {
+            if (PHOTO_CACHE[photoId]) return PHOTO_CACHE[photoId];
+            const pin = getAppPin();
+            if (!pin) return null;
+            try {
+                const res = await fetch(PHOTO_URL + '?id=' + encodeURIComponent(photoId), {
+                    headers: { 'X-App-Pin': pin }
+                });
+                if (!res.ok) return null;
+                const json = await res.json();
+                if (json && json.dataUrl) {
+                    PHOTO_CACHE[photoId] = json.dataUrl;
+                    return json.dataUrl;
+                }
+            } catch (e) {
+                console.error('No se pudo cargar la foto', e);
+            }
+            return null;
+        }
+
+        function pickPhoto(itemId) {
+            const current = PENDING_PHOTOS[itemId] || [];
+            if (current.length >= MAX_PHOTOS_PER_ITEM) {
+                showToast('Máximo ' + MAX_PHOTOS_PER_ITEM + ' fotos por ítem.', 2500);
+                return;
+            }
+            if (!PHOTO_INPUT) {
+                PHOTO_INPUT = document.createElement('input');
+                PHOTO_INPUT.type = 'file';
+                PHOTO_INPUT.accept = 'image/*';
+                PHOTO_INPUT.setAttribute('capture', 'environment');
+                PHOTO_INPUT.style.display = 'none';
+                document.body.appendChild(PHOTO_INPUT);
+            }
+            PHOTO_INPUT.value = '';
+            PHOTO_INPUT.onchange = async () => {
+                const file = PHOTO_INPUT.files && PHOTO_INPUT.files[0];
+                if (file) await addPhotoToItem(itemId, file);
+            };
+            PHOTO_INPUT.click();
+        }
+
+        async function addPhotoToItem(itemId, file) {
+            const btn = document.getElementById('evi-btn-' + itemId);
+            const wrap = document.getElementById('evi-thumbs-' + itemId);
+            const originalLabel = btn ? btn.textContent : '';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo...'; }
+
+            const placeholder = document.createElement('div');
+            placeholder.className = 'evi-thumb uploading';
+            if (wrap) wrap.appendChild(placeholder);
+
+            try {
+                const dataUrl = await compressImage(file);
+                const id = await uploadPhoto(dataUrl);
+                PHOTO_CACHE[id] = dataUrl;
+                if (!PENDING_PHOTOS[itemId]) PENDING_PHOTOS[itemId] = [];
+                PENDING_PHOTOS[itemId].push(id);
+                showToast('📷 Evidencia guardada en la nube.', 2000);
+            } catch (e) {
+                console.error(e);
+                showToast('⚠️ No se pudo subir la foto: ' + e.message, 4500);
+            } finally {
+                placeholder.remove();
+                if (btn) { btn.disabled = false; btn.textContent = originalLabel || '📷 Añadir foto'; }
+                renderItemThumbs(itemId);
+            }
+        }
+
+        function renderItemThumbs(itemId) {
+            const wrap = document.getElementById('evi-thumbs-' + itemId);
+            if (!wrap) return;
+            const ids = PENDING_PHOTOS[itemId] || [];
+            wrap.innerHTML = ids.map(id => `
+                <div class="evi-thumb">
+                    <img src="${PHOTO_CACHE[id] || ''}" alt="Evidencia" onclick="openPhotoViewer('${escapeAttr(id)}')">
+                    <button type="button" class="evi-del" title="Quitar foto" onclick="removeItemPhoto('${escapeAttr(itemId)}','${escapeAttr(id)}')">✕</button>
+                </div>`).join('');
+        }
+
+        function removeItemPhoto(itemId, photoId) {
+            PENDING_PHOTOS[itemId] = (PENDING_PHOTOS[itemId] || []).filter(id => id !== photoId);
+            if (PENDING_PHOTOS[itemId].length === 0) delete PENDING_PHOTOS[itemId];
+            renderItemThumbs(itemId);
+        }
+
+        async function openPhotoViewer(photoId) {
+            const viewer = document.getElementById('photo-viewer');
+            const img = document.getElementById('photo-viewer-img');
+            img.src = PHOTO_CACHE[photoId] || '';
+            viewer.classList.add('open');
+            if (!PHOTO_CACHE[photoId]) {
+                const dataUrl = await loadPhoto(photoId);
+                if (dataUrl) img.src = dataUrl;
+            }
+        }
+
+        function closePhotoViewer() {
+            document.getElementById('photo-viewer').classList.remove('open');
+            document.getElementById('photo-viewer-img').src = '';
+        }
+
+        /* =========================================================
            RENDER: ÍTEMS DE MÓDULOS (dinámicos)
            ========================================================= */
         function renderItemCard(item, index, moduleKey, moduleLabel, radioType) {
@@ -1395,8 +1832,8 @@
             const textPos = radioType === 'bueno' ? 'Buen Estado' : 'Cumple';
             const textNeg = radioType === 'bueno' ? 'Averiado' : 'No Cumple';
             const actionSmall = radioType === 'bueno'
-                ? '<small style="color:var(--danger); font-weight:bold;">🔧 Ticket Generado</small><button class="action-btn" style="border-color:var(--danger); color:var(--danger);">📷 Foto Avería</button>'
-                : '<small>⚠️ Evidencia requerida</small><button class="action-btn">📷 Tomar Foto</button>';
+                ? `<small style="color:var(--danger); font-weight:bold;">🔧 Ticket Generado</small><button type="button" class="action-btn" style="border-color:var(--danger); color:var(--danger);" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Foto Avería</button>`
+                : `<small>⚠️ Evidencia requerida</small><button type="button" class="action-btn" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Tomar Foto</button>`;
 
             return `
                 <div class="checklist-item" data-module="${moduleKey}" data-item-id="${item.id}">
@@ -1407,6 +1844,10 @@
                         <label class="radio-option"><input type="radio" name="${item.id}" value="0" class="score-input" onchange="updateScore(this)"><span class="radio-label ${labelNeg}">${textNeg}</span></label>
                     </div>
                     <div class="action-required">${actionSmall}</div>
+                    <div class="evidence-bar">
+                        <button type="button" class="evi-add" id="evi-btn-${escapeHtml(item.id)}" onclick="pickPhoto('${escapeAttr(item.id)}')">📷 Añadir foto</button>
+                        <div class="evi-thumbs" id="evi-thumbs-${escapeHtml(item.id)}"></div>
+                    </div>
                 </div>`;
         }
 
@@ -1428,6 +1869,10 @@
             const offset = CONFIG.moduleI.length;
             containerII.innerHTML = CONFIG.moduleII.map((item, i) => renderItemCard(item, offset + i + 1, 'II', 'Mantenimiento', 'bueno')).join('')
                 + renderAddItemCard('II');
+
+            // Al re-dibujar los ítems se pierden las miniaturas del DOM:
+            // las volvemos a pintar para no perder las fotos ya tomadas.
+            Object.keys(PENDING_PHOTOS).forEach(renderItemThumbs);
         }
 
         async function addItem(moduleKey) {
@@ -1478,20 +1923,32 @@
             const allInputs = document.querySelectorAll('.score-input:checked');
             let totalScore = 0, answered = 0, goodCount = 0, badCount = 0;
             let moduleTotals = { I: { score: 0, answered: 0 }, II: { score: 0, answered: 0 } };
+            const items = [];
 
             allInputs.forEach(input => {
                 answered++;
-                totalScore += parseInt(input.value);
+                const value = parseInt(input.value);
+                totalScore += value;
                 if (input.value === "2") goodCount++; else badCount++;
-                const mod = input.closest('.checklist-item').dataset.module;
+                const card = input.closest('.checklist-item');
+                const mod = card.dataset.module;
                 if (moduleTotals[mod]) {
                     moduleTotals[mod].answered++;
-                    moduleTotals[mod].score += parseInt(input.value);
+                    moduleTotals[mod].score += value;
                 }
+
+                // Detalle ítem por ítem: permite saber exactamente QUÉ falló.
+                // El texto solo se guarda en los que NO cumplen (que es donde
+                // hace falta para el informe); los demás se resuelven por id.
+                const entry = { id: card.dataset.itemId, mod: mod, v: value };
+                if (value === 0) {
+                    entry.t = card.querySelector('.item-desc').textContent.trim().replace(/^\d+\.\s*/, '');
+                }
+                items.push(entry);
             });
 
             return {
-                answered, goodCount, badCount,
+                answered, goodCount, badCount, items,
                 // Puntos crudos: cada ítem vale 2 pts (Cumple=2, No cumple=0)
                 points: totalScore,
                 pointsMax: answered * 2,
@@ -1595,7 +2052,10 @@
                 week: getISOWeek(dateObj),
                 weekOfMonth: getWeekOfMonth(dateObj),
                 month: dateObj.getMonth() + 1,
-                year: dateObj.getFullYear()
+                year: dateObj.getFullYear(),
+                // Detalle por ítem (qué cumplió y qué no) + evidencia fotográfica
+                items: s.items,
+                photos: JSON.parse(JSON.stringify(PENDING_PHOTOS))
             };
 
             const ok = await storageSetJSON('audit:' + record.ts, record);
@@ -1877,8 +2337,12 @@
                 </tr>`).join('') || '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Sin datos aún</td></tr>';
 
             // Detail table
-            document.querySelector('#detail-table tbody').innerHTML = records.map(r => `
-                <tr>
+            document.querySelector('#detail-table tbody').innerHTML = records.map(r => {
+                const its = recItemList(r);
+                const bad = its.filter(e => e.v === 0).length;
+                const ph = countRecordPhotos(r);
+                return `
+                <tr class="row-click" onclick="openAuditDetail(${r.ts})">
                     <td>${new Date(r.dateISO).toLocaleDateString('es-ES')}</td>
                     <td>Sem ${recWeekOfMonth(r)}</td>
                     <td>${r.month}</td>
@@ -1887,9 +2351,13 @@
                     <td>${escapeHtml(r.supervisor)}</td>
                     <td>${escapeHtml(r.auditor)}</td>
                     <td><span class="badge" style="background:${scoreColor(r.scoreOverall)}">${r.scoreOverall ?? '--'}%</span></td>
-                    <td><button class="btn-outline" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="deleteRecord(${r.ts})">🗑️</button></td>
-                </tr>`).join('') || '<tr><td colspan="9" style="text-align:center; color:#94a3b8;">No hay auditorías guardadas todavía</td></tr>';
+                    <td>${its.length ? (bad > 0 ? `<b style="color:#ef4444;">${bad}</b>` : '<span style="color:#10b981;">0</span>') : '<span style="color:#94a3b8;">—</span>'}</td>
+                    <td>${ph > 0 ? '📷 ' + ph : '<span style="color:#cbd5e1;">—</span>'}</td>
+                    <td><button class="btn-outline" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="event.stopPropagation(); deleteRecord(${r.ts})">🗑️</button></td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="11" style="text-align:center; color:#94a3b8;">No hay auditorías guardadas todavía</td></tr>';
 
+            renderSupervisorPanel(records);
             renderPerfPanel();
             renderCumulativeOnScreen();
         }
@@ -1899,6 +2367,355 @@
             if (pct >= 90) return 'var(--success)';
             if (pct >= 80) return 'var(--warning)';
             return 'var(--danger)';
+        }
+
+        /* =========================================================
+           FICHA DE LA SUPERVISORA
+           Convierte los números sueltos en una lectura clara: qué puntaje
+           tiene, si mejora o empeora, y exactamente QUÉ falla más.
+           ========================================================= */
+        function recItemList(r) { return Array.isArray(r.items) ? r.items : []; }
+
+        function countRecordPhotos(r) {
+            if (!r.photos) return 0;
+            return Object.keys(r.photos).reduce((n, k) => n + (r.photos[k] || []).length, 0);
+        }
+
+        /* El texto se guarda solo en los ítems que fallaron; para el resto se
+           resuelve por id contra la lista actual del checklist. */
+        function resolveItemText(entry) {
+            if (entry.t) return entry.t;
+            const pool = entry.mod === 'II' ? CONFIG.moduleII : CONFIG.moduleI;
+            const found = pool.find(it => it.id === entry.id);
+            return found ? found.text : 'Ítem sin descripción';
+        }
+
+        /* Cuántas veces se evaluó cada ítem y cuántas no cumplió. */
+        function buildFailStats(records) {
+            const map = {};
+            records.forEach(r => {
+                recItemList(r).forEach(e => {
+                    if (!map[e.id]) map[e.id] = { id: e.id, mod: e.mod, evals: 0, fails: 0, text: null };
+                    const s = map[e.id];
+                    s.evals++;
+                    if (e.v === 0) {
+                        s.fails++;
+                        if (!s.text && e.t) s.text = e.t;
+                    }
+                });
+            });
+            return Object.keys(map).map(k => {
+                const s = map[k];
+                return {
+                    ...s,
+                    text: s.text || resolveItemText({ id: s.id, mod: s.mod }),
+                    failPct: s.evals ? Math.round((s.fails / s.evals) * 100) : 0
+                };
+            });
+        }
+
+        /* Compara el último mes con datos contra el anterior. */
+        function monthOverMonth(records) {
+            const byMonth = {};
+            records.forEach(r => {
+                const k = r.year * 100 + r.month;
+                (byMonth[k] = byMonth[k] || []).push(r);
+            });
+            const keys = Object.keys(byMonth).map(Number).sort((a, b) => a - b);
+            if (keys.length < 2) return null;
+            const curKey = keys[keys.length - 1], prevKey = keys[keys.length - 2];
+            const cur = aggregate(byMonth[curKey]);
+            const prev = aggregate(byMonth[prevKey]);
+            if (cur.overall === null || prev.overall === null) return null;
+            return {
+                diff: cur.overall - prev.overall,
+                cur: cur.overall,
+                prev: prev.overall,
+                curLabel: MONTH_NAMES[(curKey % 100) - 1],
+                prevLabel: MONTH_NAMES[(prevKey % 100) - 1]
+            };
+        }
+
+        function trendCell(mom) {
+            if (!mom) return '<span style="color:#94a3b8;">—</span>';
+            if (mom.diff > 0) return `<span style="color:#10b981; font-weight:700;">▲ +${mom.diff} pts</span>`;
+            if (mom.diff < 0) return `<span style="color:#ef4444; font-weight:700;">▼ ${mom.diff} pts</span>`;
+            return '<span style="color:#64748b;">= igual</span>';
+        }
+
+        function moduleBar(label, pct) {
+            const shown = (pct === null || pct === undefined) ? 0 : pct;
+            const txt = (pct === null || pct === undefined) ? '--' : pct + '%';
+            return `<div style="margin-bottom:0.7rem;">
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; color:#334155;">
+                    <span>${label}</span><span style="color:${scoreHex(pct)}">${txt}</span>
+                </div>
+                <div class="fail-bar" style="margin-top:0.28rem;"><span style="width:${shown}%; background:${scoreHex(pct)}"></span></div>
+            </div>`;
+        }
+
+        function focusSupervisor(name) {
+            document.getElementById('filter-supervisor').value = name;
+            renderHistory();
+            const el = document.getElementById('sup-panel');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function renderSupervisorPanel(records) {
+            const el = document.getElementById('sup-panel');
+            const titleEl = document.getElementById('sup-panel-title');
+            const hintEl = document.getElementById('sup-panel-hint');
+            const selected = document.getElementById('filter-supervisor').value;
+
+            if (!records.length) {
+                titleEl.textContent = '👤 Evaluación de la Supervisora';
+                hintEl.textContent = 'No hay auditorías que coincidan con los filtros seleccionados.';
+                el.innerHTML = '<div class="fail-empty" style="background:#f8fafc; border-color:#e2e8f0; color:#64748b;">Sin datos para mostrar.</div>';
+                return;
+            }
+
+            if (selected) renderSupervisorSheet(selected, records, el, titleEl, hintEl);
+            else renderSupervisorRanking(records, el, titleEl, hintEl);
+        }
+
+        function renderSupervisorRanking(records, el, titleEl, hintEl) {
+            titleEl.textContent = '👥 Comparativa de Supervisoras';
+            hintEl.textContent = 'Ordenadas por puntaje acumulado del periodo filtrado. Toca una fila para abrir su ficha completa.';
+
+            const by = {};
+            records.forEach(r => { (by[r.supervisor] = by[r.supervisor] || []).push(r); });
+
+            const rows = Object.keys(by).map(name => {
+                const list = by[name];
+                const worst = buildFailStats(list)
+                    .filter(s => s.fails > 0)
+                    .sort((a, b) => b.fails - a.fails || b.failPct - a.failPct)[0] || null;
+                return { name, list, agg: aggregate(list), mom: monthOverMonth(list), worst };
+            }).sort((a, b) => (b.agg.overall ?? -1) - (a.agg.overall ?? -1));
+
+            el.innerHTML = `
+                <div class="table-wrap" style="max-height:none;">
+                    <table class="data-table">
+                        <thead><tr>
+                            <th>#</th><th>Supervisora</th><th>Auditorías</th>
+                            <th>Puntaje acumulado</th><th>Limpieza</th><th>Mantenimiento</th>
+                            <th>vs. mes anterior</th><th>Su punto más débil</th>
+                        </tr></thead>
+                        <tbody>${rows.map((r, i) => `
+                            <tr class="row-click" onclick="focusSupervisor('${escapeAttr(r.name)}')">
+                                <td><span class="rank-pos ${i === 0 ? 'top' : ''}">${i + 1}</span></td>
+                                <td style="font-weight:700;">${escapeHtml(r.name)}</td>
+                                <td>${r.agg.count}</td>
+                                <td><span class="badge" style="background:${scoreColor(r.agg.overall)}">${r.agg.overall}%</span>
+                                    <span style="font-size:0.65rem; color:#94a3b8;">${r.agg.points}/${r.agg.pointsMax}</span></td>
+                                <td>${r.agg.moduleI !== null ? r.agg.moduleI + '%' : '--'}</td>
+                                <td>${r.agg.moduleII !== null ? r.agg.moduleII + '%' : '--'}</td>
+                                <td>${trendCell(r.mom)}</td>
+                                <td style="font-size:0.78rem; color:#64748b;">${r.worst
+                                    ? escapeHtml(r.worst.text) + ' <b style="color:#ef4444;">(' + r.worst.fails + ')</b>'
+                                    : '—'}</td>
+                            </tr>`).join('')}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        function renderSupervisorSheet(name, records, el, titleEl, hintEl) {
+            titleEl.textContent = '👤 Ficha de ' + name;
+            hintEl.textContent = 'Resultado consolidado y detalle auditoría por auditoría. Toca cualquier fila para ver qué falló y su evidencia fotográfica.';
+
+            const agg = aggregate(records);
+            const mom = monthOverMonth(records);
+            const sorted = [...records].sort((a, b) => b.ts - a.ts);
+            const rooms = new Set(records.map(r => r.room).filter(Boolean));
+            const totalItems = records.reduce((n, r) => n + (r.answered || 0), 0);
+            const detailed = records.filter(r => recItemList(r).length > 0);
+            const totalFails = detailed.reduce((n, r) => n + recItemList(r).filter(e => e.v === 0).length, 0);
+            const totalPhotos = records.reduce((n, r) => n + countRecordPhotos(r), 0);
+            const complyPct = totalItems > 0 ? Math.round(((totalItems - totalFails) / totalItems) * 100) : null;
+
+            const stats = buildFailStats(records)
+                .filter(s => s.fails > 0)
+                .sort((a, b) => b.fails - a.fails || b.failPct - a.failPct)
+                .slice(0, 8);
+            const maxFails = stats.length ? stats[0].fails : 1;
+
+            const failsHTML = detailed.length === 0
+                ? `<div class="fail-empty" style="background:#fffbeb; border-color:#fde68a; color:#92400e;">
+                     Las auditorías de este periodo se guardaron antes de que el sistema registrara el detalle ítem por ítem.
+                     A partir de ahora, cada auditoría nueva mostrará aquí exactamente qué puntos falló.
+                   </div>`
+                : (stats.length === 0
+                    ? `<div class="fail-empty">✅ No se registró ningún incumplimiento en el periodo filtrado.</div>`
+                    : stats.map(s => `
+                        <div class="fail-row">
+                            <div class="fail-txt">
+                                <span class="mod-chip chip-${s.mod}">${s.mod === 'II' ? 'MANT.' : 'LIMPIEZA'}</span>
+                                ${escapeHtml(s.text)}
+                            </div>
+                            <div class="fail-bar"><span style="width:${Math.round((s.fails / maxFails) * 100)}%; background:${s.failPct >= 40 ? '#ef4444' : '#f59e0b'};"></span></div>
+                            <div class="fail-num">${s.fails} de ${s.evals} <span style="color:#94a3b8; font-weight:600;">(${s.failPct}%)</span></div>
+                        </div>`).join(''));
+
+            el.innerHTML = `
+                <div class="sup-hero">
+                    <div style="flex:0 0 auto;">${gaugeSVG(agg.overall, 120, scoreHex(agg.overall))}</div>
+                    <div class="sup-hero-id">
+                        <div class="name">${escapeHtml(name)}</div>
+                        <div class="meta">${agg.count} auditoría(s) · ${rooms.size} habitación(es) evaluada(s)</div>
+                        <span class="sup-verdict" style="background:${scoreHex(agg.overall)};">${statusLabel(agg.overall)}</span>
+                    </div>
+                    <div style="flex:1 1 220px; min-width:200px;">
+                        ${moduleBar('🧹 Limpieza (Módulo I)', agg.moduleI)}
+                        ${moduleBar('🔧 Mantenimiento (Módulo II)', agg.moduleII)}
+                        <div style="font-size:0.75rem; color:#64748b; font-weight:600;">
+                            ${mom
+                                ? `${mom.prevLabel}: ${mom.prev}% → ${mom.curLabel}: ${mom.cur}% &nbsp; ${trendCell(mom)}`
+                                : 'Se necesita más de un mes de datos para calcular la tendencia.'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sup-kpis">
+                    <div class="sup-kpi">
+                        <div class="num" style="color:${scoreHex(agg.overall)}">${agg.overall}%</div>
+                        <div class="lbl">Puntaje acumulado</div>
+                        <div class="sub">${agg.points} de ${agg.pointsMax} pts</div>
+                    </div>
+                    <div class="sup-kpi">
+                        <div class="num">${totalItems}</div>
+                        <div class="lbl">Ítems evaluados</div>
+                        <div class="sub">en ${agg.count} auditoría(s)</div>
+                    </div>
+                    <div class="sup-kpi">
+                        <div class="num" style="color:${totalFails > 0 ? '#ef4444' : '#10b981'}">${detailed.length ? totalFails : '—'}</div>
+                        <div class="lbl">Incumplimientos</div>
+                        <div class="sub">${detailed.length ? 'puntos que no cumplieron' : 'sin detalle registrado'}</div>
+                    </div>
+                    <div class="sup-kpi">
+                        <div class="num">${complyPct !== null && detailed.length ? complyPct + '%' : '—'}</div>
+                        <div class="lbl">Cumplimiento</div>
+                        <div class="sub">ítems correctos</div>
+                    </div>
+                    <div class="sup-kpi">
+                        <div class="num">${totalPhotos}</div>
+                        <div class="lbl">Evidencias</div>
+                        <div class="sub">fotos adjuntas</div>
+                    </div>
+                </div>
+
+                <div class="block-title">🎯 Lo que más falla</div>
+                <div class="block-hint">Los puntos donde esta supervisora acumula más incumplimientos. Aquí es donde conviene reforzar la capacitación.</div>
+                ${failsHTML}
+
+                <div class="block-title">📋 Auditoría por auditoría</div>
+                <div class="block-hint">Toca una fila para abrir el detalle completo con las fotos de evidencia.</div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th>Fecha</th><th>Habitación</th><th>Auditor</th><th>Puntaje</th><th>Limpieza</th><th>Mant.</th><th>No cumplen</th><th>Evidencia</th></tr></thead>
+                        <tbody>${sorted.map(r => {
+                            const its = recItemList(r);
+                            const bad = its.filter(e => e.v === 0).length;
+                            const ph = countRecordPhotos(r);
+                            return `
+                            <tr class="row-click" onclick="openAuditDetail(${r.ts})">
+                                <td>${new Date(r.dateISO).toLocaleDateString('es-ES')}</td>
+                                <td style="font-weight:700;">${escapeHtml(r.room || '—')}</td>
+                                <td>${escapeHtml(r.auditor || '—')}</td>
+                                <td><span class="badge" style="background:${scoreColor(r.scoreOverall)}">${r.scoreOverall ?? '--'}%</span></td>
+                                <td>${r.scoreModuleI !== null && r.scoreModuleI !== undefined ? r.scoreModuleI + '%' : '--'}</td>
+                                <td>${r.scoreModuleII !== null && r.scoreModuleII !== undefined ? r.scoreModuleII + '%' : '--'}</td>
+                                <td>${its.length ? (bad > 0 ? `<b style="color:#ef4444;">${bad}</b>` : '<span style="color:#10b981;">0</span>') : '<span style="color:#94a3b8;">—</span>'}</td>
+                                <td>${ph > 0 ? '📷 ' + ph : '<span style="color:#cbd5e1;">—</span>'}</td>
+                            </tr>`;
+                        }).join('')}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        /* =========================================================
+           DETALLE COMPLETO DE UNA AUDITORÍA (modal)
+           ========================================================= */
+        function renderModalItem(entry, photoIds) {
+            const chip = `<span class="mod-chip chip-${entry.mod}">${entry.mod === 'II' ? 'MANTENIMIENTO' : 'LIMPIEZA'}</span>`;
+            const photos = photoIds.length
+                ? `<div class="am-photos">${photoIds.map(id =>
+                    `<div class="am-photo"><img data-photo="${escapeHtml(id)}" alt="Evidencia" onclick="openPhotoViewer('${escapeAttr(id)}')"></div>`
+                  ).join('')}</div>`
+                : '';
+            return `<div class="am-item ${entry.v === 0 ? 'bad' : 'good'}">
+                        <div class="t">${chip} ${escapeHtml(resolveItemText(entry))}</div>
+                        ${photos}
+                    </div>`;
+        }
+
+        async function openAuditDetail(ts) {
+            const rec = ALL_RECORDS.find(r => r.ts === ts);
+            if (!rec) return;
+
+            const d = new Date(rec.dateISO);
+            document.getElementById('am-title').textContent =
+                'Habitación ' + (rec.room || '—') + ' · ' + (rec.scoreOverall ?? '--') + '%';
+            document.getElementById('am-sub').textContent =
+                d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) +
+                ' · Supervisora: ' + (rec.supervisor || '—') +
+                ' · Auditor: ' + (rec.auditor || '—');
+
+            const items = recItemList(rec);
+            const bad = items.filter(e => e.v === 0);
+            const good = items.filter(e => e.v === 2);
+            const photos = rec.photos || {};
+
+            let html = `
+                <div class="sup-kpis" style="margin-bottom:0.5rem;">
+                    <div class="sup-kpi"><div class="num" style="color:${scoreHex(rec.scoreOverall)}">${rec.scoreOverall ?? '--'}%</div><div class="lbl">General</div><div class="sub">${rec.points ?? 0}/${rec.pointsMax ?? 0} pts</div></div>
+                    <div class="sup-kpi"><div class="num">${rec.scoreModuleI ?? '--'}%</div><div class="lbl">Limpieza</div></div>
+                    <div class="sup-kpi"><div class="num">${rec.scoreModuleII ?? '--'}%</div><div class="lbl">Mantenimiento</div></div>
+                    <div class="sup-kpi"><div class="num" style="color:${bad.length ? '#ef4444' : '#10b981'}">${items.length ? bad.length : '—'}</div><div class="lbl">No cumplen</div></div>
+                </div>`;
+
+            if (!items.length) {
+                html += `<div class="fail-empty" style="background:#fffbeb; border-color:#fde68a; color:#92400e;">
+                    Esta auditoría se guardó antes de que el sistema registrara el detalle ítem por ítem, por eso solo se muestra el puntaje.
+                </div>`;
+            } else {
+                html += `<div class="block-title">❌ No cumplieron (${bad.length})</div>`;
+                html += bad.length
+                    ? bad.map(e => renderModalItem(e, photos[e.id] || [])).join('')
+                    : `<div class="fail-empty">✅ Todos los puntos evaluados cumplieron el estándar.</div>`;
+
+                html += `<div class="block-title">✅ Cumplieron (${good.length})</div>`;
+                html += good.length
+                    ? good.map(e => renderModalItem(e, photos[e.id] || [])).join('')
+                    : `<div class="block-hint">Ninguno.</div>`;
+            }
+
+            if (rec.comments && rec.comments.trim()) {
+                html += `<div class="block-title">📝 Observaciones del auditor</div>
+                         <div class="am-item good"><div class="t" style="font-weight:400;">${escapeHtml(rec.comments)}</div></div>`;
+            }
+
+            document.getElementById('am-body').innerHTML = html;
+            document.getElementById('audit-modal').classList.add('open');
+            hydrateModalPhotos();
+        }
+
+        async function hydrateModalPhotos() {
+            const imgs = Array.from(document.querySelectorAll('#am-body img[data-photo]'));
+            for (const img of imgs) {
+                const id = img.getAttribute('data-photo');
+                if (PHOTO_CACHE[id]) { img.src = PHOTO_CACHE[id]; continue; }
+                const dataUrl = await loadPhoto(id);
+                if (dataUrl) {
+                    img.src = dataUrl;
+                } else if (img.parentElement) {
+                    img.parentElement.innerHTML =
+                        '<div style="font-size:0.62rem; color:#94a3b8; padding:0.4rem; text-align:center;">Foto no disponible</div>';
+                }
+            }
+        }
+
+        function closeAuditDetail() {
+            document.getElementById('audit-modal').classList.remove('open');
         }
 
         async function deleteRecord(ts) {
@@ -1973,6 +2790,20 @@
                 ? escapeHtml(record.comments)
                 : '<span style="color:#94a3b8;">Sin observaciones adicionales.</span>';
 
+            // Evidencia fotográfica: se incrusta la imagen ya comprimida.
+            const photoMap = record.photos || {};
+            const photoEntries = [];
+            Object.keys(photoMap).forEach(itemId => {
+                (photoMap[itemId] || []).forEach(pid => {
+                    if (PHOTO_CACHE[pid]) photoEntries.push(PHOTO_CACHE[pid]);
+                });
+            });
+            const evidenceHTML = photoEntries.length ? `
+                <div class="pdf-section-title">📷 Evidencia Fotográfica (${photoEntries.length})</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    ${photoEntries.map(src => `<img src="${src}" style="width:150px; height:150px; object-fit:cover; border:1px solid #e2e8f0; border-radius:6px;">`).join('')}
+                </div>` : '';
+
             return `
                 <div class="pdf-report-header">
                     <div>
@@ -2016,6 +2847,8 @@
                 <div class="pdf-section-title">⚠️ Puntos que Requieren Atención</div>
                 ${attentionHTML}
 
+                ${evidenceHTML}
+
                 <div class="pdf-section-title">📝 Observaciones</div>
                 <div class="pdf-obs">${commentsHTML}</div>
 
@@ -2033,6 +2866,13 @@
 
             // Espera a que el navegador pinte el contenido antes de capturarlo
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+            // Y a que TODAS las imágenes (evidencia fotográfica) estén decodificadas,
+            // si no html2canvas las capturaría en blanco.
+            await Promise.all(Array.from(target.querySelectorAll('img')).map(img =>
+                img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; })
+            ));
+
             await new Promise(r => setTimeout(r, 300));
 
             const opt = {
@@ -2065,6 +2905,13 @@
             document.querySelectorAll('.checklist-item').forEach(item => item.classList.remove('status-good', 'status-bad'));
             document.querySelectorAll('.action-required').forEach(a => a.classList.remove('active'));
             document.getElementById('observaciones').value = "";
+
+            // Las fotos ya subidas quedan asociadas al registro guardado;
+            // el formulario arranca limpio para la siguiente habitación.
+            const itemsConFoto = Object.keys(PENDING_PHOTOS);
+            PENDING_PHOTOS = {};
+            itemsConFoto.forEach(renderItemThumbs);
+
             resetScoreDisplay();
             window.scrollTo(0, 0);
         }
@@ -2128,7 +2975,8 @@
                 scoreModuleI: s.moduleIPct,
                 scoreModuleII: s.moduleIIPct,
                 week: getISOWeek(dateObj),
-                year: dateObj.getFullYear()
+                year: dateObj.getFullYear(),
+                photos: PENDING_PHOTOS
             };
 
             await exportarPDF(
