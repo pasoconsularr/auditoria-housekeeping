@@ -163,6 +163,20 @@ y en **ámbar** si supera los 3, para priorizar.
 
 ---
 
+## 🗑️ Corregir un error: borrar una auditoría suelta
+
+Si se cargó una auditoría equivocada, **no hace falta borrar a la supervisora**.
+En *Historial* se toca la fila para abrir el detalle y, al final del detalle,
+**🗑️ Eliminar esta auditoría** (también está el 🗑️ de cada fila de la tabla).
+
+- Pide el **PIN de dirección (6284)** y muestra habitación, fecha y supervisora
+  antes de confirmar.
+- Borra **solo ese registro**: la supervisora, sus demás auditorías, el ranking
+  y los reportes se recalculan sin él.
+- La eliminación llega a todos los dispositivos y no reaparece al sincronizar.
+
+---
+
 ## 👥 Supervisoras
 
 - El campo **Supervisora Evaluada** es un **desplegable** con los nombres registrados.

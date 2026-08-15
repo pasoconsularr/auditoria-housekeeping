@@ -888,6 +888,16 @@
             flex-shrink: 0;
         }
         .audit-modal-body { padding: 1.25rem; }
+        .am-danger {
+            margin-top: 1.2rem; padding-top: 1rem; border-top: 1px dashed #e2e8f0; text-align: center;
+        }
+        .btn-danger-soft {
+            width: 100%; max-width: 320px; padding: 0.7rem 1rem; border-radius: 10px;
+            border: 1px solid #fca5a5; background: #fef2f2; color: #b91c1c;
+            font-weight: 700; font-size: 0.85rem; cursor: pointer; touch-action: manipulation;
+        }
+        .btn-danger-soft:active { background: #fee2e2; }
+        .am-danger .hint { font-size: 0.7rem; color: #94a3b8; margin-top: 0.5rem; line-height: 1.45; }
         .am-photos { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
         .am-photo {
             width: 110px; height: 110px;
@@ -1935,12 +1945,14 @@
             }
             const moduleTs = (await storageGetJSON('config:moduleTs')) || 0;
             const supervisorsDeleted = (await storageGetJSON('config:supervisorsDeleted')) || [];
-            CONFIG = { supervisors, moduleI, moduleII, moduleTs, supervisorsDeleted };
+            const recordsDeleted = (await storageGetJSON('config:recordsDeleted')) || [];
+            CONFIG = { supervisors, moduleI, moduleII, moduleTs, supervisorsDeleted, recordsDeleted };
         }
 
         async function persistSupervisors() {
             await storageSetJSON('config:supervisors', CONFIG.supervisors);
             await storageSetJSON('config:supervisorsDeleted', CONFIG.supervisorsDeleted || []);
+            await storageSetJSON('config:recordsDeleted', CONFIG.recordsDeleted || []);
         }
         /* Guarda el checklist marcándolo con la hora del cambio. Ese sello es
            lo que permite que un ítem añadido en un teléfono llegue al resto y
@@ -2052,12 +2064,19 @@
 
         function filtrarBorradas(records) {
             const t = tombstonesActivas();
-            if (!t.length) return records || [];
+            const sueltas = new Set((CONFIG.recordsDeleted || []).map(Number));
+            if (!t.length && !sueltas.size) return records || [];
             const porNombre = new Map(t.map(x => [x.name, Number(x.ts) || 0]));
             return (records || []).filter(r => {
-                const marca = porNombre.get(r && r.supervisor);
+                if (!r) return false;
+                if (sueltas.has(Number(r.ts))) return false;   // auditoría borrada una a una
+                const marca = porNombre.get(r.supervisor);
                 return marca === undefined || Number(r.ts) > marca;
             });
+        }
+
+        function mergeRecordsDeleted(remoteList, localList) {
+            return Array.from(new Set([...(remoteList || []), ...(localList || [])].map(Number).filter(Boolean)));
         }
 
         function mergeTombstones(remoteList, localList) {
@@ -2800,6 +2819,7 @@
             // Las supervisoras borradas desde otro equipo se acatan primero,
             // así sus auditorías no reaparecen aquí.
             CONFIG.supervisorsDeleted = mergeTombstones(remote.data.supervisorsDeleted, CONFIG.supervisorsDeleted);
+            CONFIG.recordsDeleted = mergeRecordsDeleted(remote.data.recordsDeleted, CONFIG.recordsDeleted);
 
             const localRecords = await fetchAllRecords();
             const mergedRecords = filtrarBorradas(mergeRecordsByTs(remote.data.records, localRecords));
@@ -2843,6 +2863,7 @@
 
                 if (remote.ok && remote.data) {
                     CONFIG.supervisorsDeleted = mergeTombstones(remote.data.supervisorsDeleted, CONFIG.supervisorsDeleted);
+                    CONFIG.recordsDeleted = mergeRecordsDeleted(remote.data.recordsDeleted, CONFIG.recordsDeleted);
                 }
 
                 const localRecords = await fetchAllRecords();
@@ -2856,6 +2877,7 @@
                 const payload = {
                     supervisors: mergedSupervisors,
                     supervisorsDeleted: CONFIG.supervisorsDeleted || [],
+                    recordsDeleted: CONFIG.recordsDeleted || [],
                     moduleI: CONFIG.moduleI,
                     moduleII: CONFIG.moduleII,
                     moduleTs: CONFIG.moduleTs || 0,
@@ -3551,6 +3573,14 @@
                          <div class="am-item good"><div class="t" style="font-weight:400;">${escapeHtml(rec.comments)}</div></div>`;
             }
 
+            /* Si esta auditoría se cargó por error, se borra desde aquí mismo:
+               solo este registro, sin afectar a la supervisora. */
+            html += `<div class="am-danger">
+                        <button type="button" class="btn-danger-soft" onclick="deleteRecord(${rec.ts})">🗑️ Eliminar esta auditoría</button>
+                        <div class="hint">Pide el PIN de dirección. Se elimina únicamente este registro
+                        (habitación ${escapeHtml(rec.room || '—')}); la supervisora y sus demás auditorías no se tocan.</div>
+                     </div>`;
+
             document.getElementById('am-body').innerHTML = html;
             document.getElementById('audit-modal').classList.add('open');
             hydrateModalPhotos();
@@ -3575,12 +3605,29 @@
             document.getElementById('audit-modal').classList.remove('open');
         }
 
+        /* Borrar UNA auditoría concreta (por ejemplo, una cargada por error),
+           sin tocar a la supervisora ni al resto de su historial.
+           Pide el PIN de dirección y deja una marca para que el registro no
+           vuelva a aparecer al sincronizar con otro teléfono. */
         async function deleteRecord(ts) {
-            if (!confirm('¿Eliminar esta auditoría del historial permanentemente?')) return;
+            const rec = (ALL_RECORDS || []).find(r => r.ts === ts);
+            const etiqueta = rec
+                ? 'Habitación ' + (rec.room || '—') + ' · ' +
+                  new Date(rec.dateISO).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) +
+                  ' · ' + (rec.supervisor || '—')
+                : 'Auditoría seleccionada';
+            if (!await pedirConfig('Eliminar esta auditoría', etiqueta + '. Solo se borra este registro; la supervisora y sus demás auditorías no se tocan.')) return;
+            if (!confirm('¿Eliminar definitivamente esta auditoría?\n\n' + etiqueta)) return;
             try {
                 await DB.delete('audit:' + ts);
-                showToast('Registro eliminado.');
-                renderHistory();
+                CONFIG.recordsDeleted = Array.from(new Set([...(CONFIG.recordsDeleted || []), Number(ts)]));
+                await persistSupervisors();
+                closeAuditDetail();
+                const subido = await pushRemote();
+                await renderHistory();
+                showToast(subido
+                    ? '🗑️ Auditoría eliminada en todos los dispositivos.'
+                    : '🗑️ Auditoría eliminada aquí (se sincronizará al recuperar conexión).', 4000);
             } catch (e) {
                 showToast('No se pudo eliminar el registro.');
             }
