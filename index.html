@@ -2529,9 +2529,17 @@
             const rooms = new Set(records.map(r => r.room).filter(Boolean));
             const totalItems = records.reduce((n, r) => n + (r.answered || 0), 0);
             const detailed = records.filter(r => recItemList(r).length > 0);
-            const totalFails = detailed.reduce((n, r) => n + recItemList(r).filter(e => e.v === 0).length, 0);
             const totalPhotos = records.reduce((n, r) => n + countRecordPhotos(r), 0);
-            const complyPct = totalItems > 0 ? Math.round(((totalItems - totalFails) / totalItems) * 100) : null;
+
+            // Los incumplimientos solo se conocen en las auditorías que tienen
+            // detalle ítem por ítem. Si el % de cumplimiento se calculara sobre
+            // el total de ítems (incluyendo auditorías antiguas sin detalle)
+            // saldría un número falsamente alto, así que se calcula solo sobre
+            // la base que realmente se puede medir.
+            const detailedItems = detailed.reduce((n, r) => n + recItemList(r).length, 0);
+            const totalFails = detailed.reduce((n, r) => n + recItemList(r).filter(e => e.v === 0).length, 0);
+            const complyPct = detailedItems > 0 ? Math.round(((detailedItems - totalFails) / detailedItems) * 100) : null;
+            const baseParcial = detailed.length > 0 && detailed.length < records.length;
 
             const stats = buildFailStats(records)
                 .filter(s => s.fails > 0)
@@ -2589,12 +2597,12 @@
                     <div class="sup-kpi">
                         <div class="num" style="color:${totalFails > 0 ? '#ef4444' : '#10b981'}">${detailed.length ? totalFails : '—'}</div>
                         <div class="lbl">Incumplimientos</div>
-                        <div class="sub">${detailed.length ? 'puntos que no cumplieron' : 'sin detalle registrado'}</div>
+                        <div class="sub">${detailed.length ? 'de ' + detailedItems + ' ítems con detalle' : 'sin detalle registrado'}</div>
                     </div>
                     <div class="sup-kpi">
-                        <div class="num">${complyPct !== null && detailed.length ? complyPct + '%' : '—'}</div>
+                        <div class="num" style="color:${complyPct !== null ? scoreHex(complyPct) : '#94a3b8'}">${complyPct !== null ? complyPct + '%' : '—'}</div>
                         <div class="lbl">Cumplimiento</div>
-                        <div class="sub">ítems correctos</div>
+                        <div class="sub">${complyPct === null ? 'sin detalle registrado' : (baseParcial ? 'solo auditorías con detalle' : 'ítems correctos')}</div>
                     </div>
                     <div class="sup-kpi">
                         <div class="num">${totalPhotos}</div>
