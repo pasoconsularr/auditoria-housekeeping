@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Sistema de auditoría integral de limpieza y mantenimiento de habitaciones.">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Auditoría HK">
+    <title>Auditoría Integral - Housekeeping</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --border-light: #e2e8f0;
+            --header-h: 80px;
+        }
+
+        #pin-lock-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: linear-gradient(160deg, #0f172a, #1e293b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        #pin-lock-overlay .pin-box {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 2rem 1.75rem;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+        }
+        #pin-lock-overlay .pin-icon { font-size: 2.5rem; margin-bottom: 0.25rem; }
+        #pin-lock-overlay h2 { margin: 0.25rem 0 0.25rem; font-size: 1.15rem; color: #0f172a; }
+        #pin-lock-overlay p.pin-sub { margin: 0 0 1.25rem; font-size: 0.85rem; color: #64748b; }
+        #pin-dots { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+        #pin-dots .dot {
+            width: 16px; height: 16px; border-radius: 50%;
+            border: 2px solid #cbd5e1; background: transparent; transition: all .15s;
+        }
+        #pin-dots .dot.filled { background: #3b82f6; border-color: #3b82f6; }
+        #pin-dots.shake { animation: pin-shake 0.4s; }
+        @keyframes pin-shake {
+            10%, 90% { transform: translateX(-2px); }
+            20%, 80% { transform: translateX(4px); }
+            30%, 50%, 70% { transform: translateX(-8px); }
+            40%, 60% { transform: translateX(8px); }
+        }
+        #pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+        #pin-keypad button {
+            font-size: 1.3rem;
+            padding: 0.9rem 0;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #0f172a;
+            cursor: pointer;
+        }
+        #pin-keypad button:active { background: #e2e8f0; }
+        #pin-keypad button.pin-clear, #pin-keypad button.pin-back { font-size: 0.95rem; color: #64748b; }
+        #pin-error-msg { min-height: 1.2rem; font-size: 0.8rem; color: #ef4444; font-weight: 600; margin-top: 0.75rem; }
+        #app-root.pin-locked { display: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        /* -------------------------------------
+           STICKY HEADER & DYNAMIC SCORE
+           ------------------------------------- */
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--header-h);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .header-title-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .score-container-compact {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(255,255,255,0.1);
+            padding: 5px 15px 5px 5px;
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .score-circle-wrapper {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .score-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 4;
+        }
+
+        .score-progress {
+            fill: none;
+            stroke: var(--danger);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 126;
+            stroke-dashoffset: 126;
+            transition: stroke-dashoffset 0.8s ease-out, stroke 0.8s ease;
+        }
+
+        .score-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
+            z-index: 2;
+        }
+
+        .score-status-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        /* -------------------------------------
+           TABS
+           ------------------------------------- */
+        .tabs-bar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tab-btn {
+            border: none;
+            background: white;
+            color: var(--text-main);
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px 10px 0 0;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid var(--border-light);
+            border-bottom: none;
+            opacity: 0.6;
+        }
+
+        .tab-btn.active {
+            opacity: 1;
+            background: var(--card-bg);
+            color: var(--primary);
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+        }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        /* -------------------------------------
+           MAIN CONTAINER & GRID
+           ------------------------------------- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            padding-bottom: 100px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-light);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            color: white;
+            background-color: var(--primary);
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            font-style: italic;
+            border-left: 3px solid var(--secondary);
+            padding-left: 10px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid-layout { grid-template-columns: 1fr 1fr; }
+            .header-title-area h1 { font-size: 1.5rem; }
+            .header-subtitle { font-size: 0.9rem; }
+            .score-circle-wrapper { width: 60px; height: 60px; }
+            .score-value { font-size: 1.2rem; }
+            .score-status-text { font-size: 0.9rem; }
+            .score-container-compact { padding: 8px 20px 8px 8px; }
+            header { padding: 0.5rem 2rem; height: 90px; }
+        }
+
+        @media (min-width: 1024px) {
+            .grid-layout { grid-template-columns: 1fr 1fr 1fr; }
+        }
+
+        /* -------------------------------------
+           FORM ELEMENTS
+           ------------------------------------- */
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            background-color: #f8fafc;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+
+        .supervisor-row { display: flex; gap: 0.5rem; align-items: stretch; }
+        .supervisor-row .form-control { flex: 1; }
+        .icon-btn {
+            flex-shrink: 0;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 44px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .icon-btn:hover { background: var(--secondary); }
+
+        .supervisor-panel {
+            display: none;
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed var(--border-light);
+        }
+        .supervisor-panel.active { display: block; }
+        .supervisor-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 4px 6px 4px 12px;
+            margin: 3px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .supervisor-chip button {
+            border: none;
+            background: var(--danger);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.7rem;
+            line-height: 1;
+        }
+
+        /* -------------------------------------
+           CHECKLIST ITEMS
+           ------------------------------------- */
+        .checklist-item {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid var(--border-light);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .item-desc {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            font-size: 1rem;
+            padding-right: 1.5rem;
+        }
+
+        .item-remove {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .item-remove:hover { color: var(--danger); }
+
+        .radio-group { display: flex; gap: 0.5rem; }
+        .radio-option { flex: 1; position: relative; }
+        .radio-option input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+
+        .radio-label {
+            display: block;
+            text-align: center;
+            padding: 0.75rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: white;
+            color: var(--text-main);
+            user-select: none;
+        }
+
+        .radio-option input[type="radio"]:checked + .label-cumple,
+        .radio-option input[type="radio"]:checked + .label-bueno {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
+
+        .radio-option input[type="radio"]:checked + .label-nocumple,
+        .radio-option input[type="radio"]:checked + .label-averiado {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+        }
+
+        .checklist-item.status-good { border-left-color: var(--success); }
+        .checklist-item.status-bad { border-left-color: var(--danger); }
+
+        .action-required {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #fef2f2;
+            border: 1px dashed var(--danger);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .action-required.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            background-color: white;
+            border: 1px solid var(--danger);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--danger);
+            width: 100%;
+            margin-top: 0.5rem;
+            transition: all 0.2s;
+        }
+        .action-btn:hover { background-color: var(--danger); color: white; }
+
+        .add-item-card {
+            background: #f8fafc;
+            border: 2px dashed var(--border-light);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+        .add-item-card input { margin-bottom: 0; }
+        .add-item-card button {
+            border: none;
+            background: var(--secondary);
+            color: white;
+            padding: 0.7rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .add-item-card button:hover { background: #2563eb; }
+
+        .module-scores {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .module-scores span b { color: var(--primary); }
+
+        /* -------------------------------------
+           HISTORY / DASHBOARD
+           ------------------------------------- */
+        .filters-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .filters-row .form-group { flex: 1; min-width: 180px; }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }
+        .stat-card .num { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+        .stat-card .lbl { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 600; }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        table.data-table th, table.data-table td {
+            padding: 0.6rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+        table.data-table th {
+            background: #f8fafc;
+            color: var(--primary);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+        .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: white;
+        }
+        .btn-secondary {
+            border: none;
+            background: var(--primary);
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-secondary:hover { background: var(--secondary); }
+        .btn-outline {
+            border: 2px solid var(--border-light);
+            background: white;
+            color: var(--text-main);
+            padding: 0.55rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* Toggle Semana / Mes */
+        .view-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.18);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 3px;
+        }
+        .tg-btn {
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.75);
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .tg-btn.active { background: white; color: #0f766e; }
+
+        /* Gráfico de barras de desempeño */
+        .perf-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 14px;
+            padding: 1rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            min-height: 170px;
+        }
+        .perf-bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 66px;
+            flex-shrink: 0;
+        }
+        .perf-bar {
+            width: 36px;
+            border-radius: 5px 5px 0 0;
+            transition: height 0.4s ease;
+        }
+        .perf-bar-val { font-size: 0.8rem; font-weight: 800; margin-bottom: 4px; }
+        .perf-bar-lbl { font-size: 0.68rem; color: #475569; margin-top: 6px; text-align: center; font-weight: 600; }
+        .perf-bar-sub { font-size: 0.6rem; color: #94a3b8; }
+
+        tr.perf-row { cursor: pointer; }
+        tr.perf-row:hover { background: #f8fafc; }
+        tr.perf-detail-row > td { background: #f8fafc; padding: 0; }
+        .perf-detail-inner { padding: 0.75rem 1rem; }
+        .perf-detail-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            padding: 5px 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+        .perf-detail-line:last-child { border-bottom: none; }
+
+        /* -------------------------------------
+           BOTTOM BAR & TOAST
+           ------------------------------------- */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .bottom-actions {
+            display: flex;
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 700px;
+            flex-wrap: wrap;
+        }
+        .btn-pdf, .btn-save {
+            color: white;
+            border: none;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            flex: 1;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+        }
+        .btn-pdf {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+        }
+        .btn-pdf:active, .btn-save:active { transform: scale(0.98); }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 2000;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+        /* -------------------------------------
+           REPORTE PDF RESUMIDO (generado aparte, no es una copia del formulario)
+           ------------------------------------- */
+        .pdf-report {
+            width: 780px;
+            max-width: 100%;
+            background: white;
+            padding: 32px;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0 auto;
+        }
+        /* Contenedor visible temporalmente mientras se captura el PDF */
+        #pdf-stage {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            overflow: auto;
+            z-index: 5000;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+        #pdf-stage.active { display: block; }
+        .pdf-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 14px;
+            margin-bottom: 22px;
+        }
+        .pdf-report-header h1 { margin: 0; font-size: 1.4rem; color: var(--primary); }
+        .pdf-report-header .sub { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+        .pdf-report-header .badge-status {
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+        .pdf-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .pdf-meta-item { background: #f8fafc; border-radius: 8px; padding: 10px 12px; border: 1px solid #e2e8f0; }
+        .pdf-meta-item .lbl { font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px; }
+        .pdf-meta-item .val { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-top: 2px; }
+
+        .pdf-gauges { display: flex; justify-content: space-around; align-items: flex-start; margin: 10px 0 26px 0; text-align: center; }
+        .pdf-gauge-block { display: flex; flex-direction: column; align-items: center; }
+        .pdf-gauge-label { font-size: 0.85rem; font-weight: 800; color: var(--primary); margin-top: 8px; }
+        .pdf-gauge-sub { font-size: 0.7rem; color: #64748b; }
+
+        .pdf-section-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+            background: var(--primary);
+            padding: 9px 14px;
+            border-radius: 6px;
+            margin: 22px 0 12px 0;
+        }
+        .pdf-summary-counts { display: flex; gap: 14px; margin-bottom: 18px; }
+        .pdf-count-box { flex: 1; text-align: center; background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #e2e8f0; }
+        .pdf-count-box .num { font-size: 1.4rem; font-weight: 800; }
+        .pdf-count-box .lbl { font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; }
+
+        .pdf-attention-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 12px;
+            border-left: 4px solid var(--danger);
+            background: #fef2f2;
+            border-radius: 6px;
+            margin-bottom: 7px;
+            font-size: 0.82rem;
+        }
+        .pdf-attention-item .mod-tag { font-size: 0.65rem; font-weight: 800; color: var(--danger); background: white; border: 1px solid var(--danger); border-radius: 10px; padding: 2px 8px; margin-left: 8px; white-space: nowrap; }
+        .pdf-attention-empty { padding: 12px 14px; background: #f0fdf4; border-left: 4px solid var(--success); border-radius: 6px; color: #166534; font-weight: 700; font-size: 0.88rem; }
+
+        .pdf-obs { background: #f8fafc; border-radius: 8px; padding: 14px; font-size: 0.85rem; border: 1px solid #e2e8f0; white-space: pre-wrap; min-height: 20px; }
+        .pdf-footer { margin-top: 28px; text-align: center; font-size: 0.68rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+
+        @media print {
+            .bottom-bar { display: none !important; }
+            .tabs-bar { display: none !important; }
+            header { position: static; box-shadow: none; border-bottom: 2px solid #0f172a; color: black; background: white; }
+            .score-container-compact { background: #f1f5f9; border: 1px solid #ccc; }
+            .score-status-text { color: black; }
+            .score-value { color: black; }
+            .score-bg { stroke: #e2e8f0; }
+            body { background-color: white; }
+            .container { padding-bottom: 0; max-width: 100%; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 1rem; }
+            .section-title { background-color: #f1f5f9; color: #0f172a; border-bottom: 2px solid #0f172a; }
+            .action-btn, .add-item-card, .item-remove { display: none !important; }
+            .action-required.active { border: none; padding: 0; background: none; text-align: left; }
+            .action-required.active small { color: #000; font-style: italic; }
+
+            .radio-option input[type="radio"]:checked + .label-cumple,
+            .radio-option input[type="radio"]:checked + .label-bueno { background-color: #10b981 !important; color: white !important; -webkit-print-color-adjust: exact; }
+            .radio-option input[type="radio"]:checked + .label-nocumple,
+            .radio-option input[type="radio"]:checked + .label-averiado { background-color: #ef4444 !important; color: white !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pin-lock-overlay">
+        <div class="pin-box">
+            <div class="pin-icon">🔒</div>
+            <h2>Acceso restringido</h2>
+            <p class="pin-sub">Ingresa el PIN de 4 dígitos para continuar</p>
+            <div id="pin-dots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div id="pin-keypad">
+                <button type="button" data-pin="1">1</button>
+                <button type="button" data-pin="2">2</button>
+                <button type="button" data-pin="3">3</button>
+                <button type="button" data-pin="4">4</button>
+                <button type="button" data-pin="5">5</button>
+                <button type="button" data-pin="6">6</button>
+                <button type="button" data-pin="7">7</button>
+                <button type="button" data-pin="8">8</button>
+                <button type="button" data-pin="9">9</button>
+                <button type="button" class="pin-clear" id="pin-clear-btn">Borrar</button>
+                <button type="button" data-pin="0">0</button>
+                <button type="button" class="pin-back" id="pin-back-btn">⌫</button>
+            </div>
+            <div id="pin-error-msg"></div>
+        </div>
+    </div>
+
+    <div id="app-root" class="pin-locked">
+    <header id="main-header">
+        <div class="header-title-area">
+            <h1>Auditoría Integral</h1>
+            <span class="header-subtitle">Limpieza y Mantenimiento</span>
+        </div>
+        <div class="score-container-compact">
+            <div class="score-circle-wrapper">
+                <svg class="score-svg" viewBox="0 0 50 50">
+                    <circle class="score-bg" cx="25" cy="25" r="20"></circle>
+                    <circle class="score-progress" id="progress-circle" cx="25" cy="25" r="20"></circle>
+                </svg>
+                <div class="score-value"><span id="score-number">0</span><span style="font-size:0.6em;">%</span></div>
+            </div>
+            <div class="score-status-text" id="score-status-text">Pendiente</div>
+        </div>
+    </header>
+
+    <div class="tabs-bar">
+        <button class="tab-btn active" id="tab-btn-audit" onclick="switchTab('audit')">📋 Nueva Auditoría</button>
+        <button class="tab-btn" id="tab-btn-history" onclick="switchTab('history')">📊 Historial y Métricas</button>
+    </div>
+
+    <!-- ================= VISTA: NUEVA AUDITORÍA ================= -->
+    <div class="view-section active" id="view-audit">
+    <div id="pdf-content">
+        <div class="container">
+            <!-- Datos de Inspección -->
+            <div class="card">
+                <h2 class="section-title">📄 Datos de la Inspección</h2>
+                <div class="grid-layout">
+                    <div class="form-group">
+                        <label>Número de Habitación</label>
+                        <input type="text" id="room_number" class="form-control" placeholder="Ej. 101" value="101">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora</label>
+                        <input type="datetime-local" class="form-control" id="audit_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Auditor</label>
+                        <input type="text" class="form-control" id="auditor_name" placeholder="Nombre del Auditor">
+                    </div>
+                    <div class="form-group">
+                        <label>Supervisora Evaluada</label>
+                        <div class="supervisor-row">
+                            <input type="text" id="supervisor_name" class="form-control" list="supervisors-datalist" placeholder="Escribe o selecciona una supervisora...">
+                            <datalist id="supervisors-datalist"></datalist>
+                            <button type="button" class="icon-btn" title="Guardar esta supervisora en la lista" onclick="saveTypedSupervisor()">💾</button>
+                            <button type="button" class="icon-btn" title="Gestionar supervisoras" onclick="toggleSupervisorPanel()">⚙️</button>
+                        </div>
+                        <div class="supervisor-panel" id="supervisor-panel">
+                            <div style="font-size:0.8rem; font-weight:600; color:var(--primary); margin-bottom:6px;">Supervisoras registradas:</div>
+                            <div id="supervisor-chips"></div>
+                            <div style="display:flex; gap:6px; margin-top:10px;">
+                                <input type="text" id="new-supervisor-input" class="form-control" placeholder="Nombre de nueva supervisora" style="padding:0.5rem;">
+                                <button type="button" class="btn-secondary" onclick="addSupervisorFromPanel()">+ Añadir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==============================================
+                 MÓDULO I: LIMPIEZA
+                 ============================================== -->
+            <div class="card">
+                <h2 class="section-title">✨ Módulo I: Estándares de Limpieza</h2>
+                <p class="section-subtitle">Evalúa la calidad del trabajo de la supervisora.</p>
+                <div class="grid-layout" id="moduleI-items"></div>
+            </div>
+
+            <!-- ==============================================
+                 MÓDULO II: MANTENIMIENTO
+                 ============================================== -->
+            <div class="card" style="border: 2px solid #475569;">
+                <h2 class="section-title" style="background-color: #475569;">🔧 Módulo II: Mantenimiento de habitación</h2>
+                <p class="section-subtitle">Ítems con Puntuación Integrada. Si marca "Averiado" (0 pts), genera un ticket automáticamente.</p>
+                <div class="grid-layout" id="moduleII-items"></div>
+            </div>
+
+            <!-- Resumen por módulo -->
+            <div class="card">
+                <h2 class="section-title" style="background-color:#334155;">📈 Resumen por Módulo</h2>
+                <div class="module-scores">
+                    <span>Limpieza: <b id="score-module-I">--%</b></span>
+                    <span>Mantenimiento: <b id="score-module-II">--%</b></span>
+                </div>
+            </div>
+
+            <!-- Comentarios Finales -->
+            <div class="card">
+                <h2 class="section-title" style="background-color: var(--secondary);">📝 Observaciones</h2>
+                <textarea class="form-control" rows="4" id="observaciones" placeholder="Detalle averías encontradas o razones de incumplimiento general..."></textarea>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- ================= VISTA: HISTORIAL ================= -->
+    <div class="view-section" id="view-history">
+        <div class="container">
+            <div class="card">
+                <h2 class="section-title" style="background-color:#334155;">📊 Historial de Evaluaciones</h2>
+                <p class="section-subtitle">Los datos se agrupan automáticamente por semana, mes y año de cada auditoría guardada.</p>
+
+                <div class="filters-row">
+                    <div class="form-group">
+                        <label>Supervisora</label>
+                        <select id="filter-supervisor" class="form-control" onchange="renderHistory()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Año</label>
+                        <select id="filter-year" class="form-control" onchange="renderHistory()">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mes</label>
+                        <select id="filter-month" class="form-control" onchange="renderHistory()">
+                            <option value="">Todos</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Agrupar métricas por</label>
+                        <select id="filter-period" class="form-control" onchange="renderHistory()">
+                            <option value="week">Semana</option>
+                            <option value="month">Mes</option>
+                            <option value="year">Año</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:flex-end; gap:0.5rem;">
+                        <button class="btn-outline" onclick="limpiarFiltros()">✖️ Limpiar filtros</button>
+                        <button class="btn-outline" onclick="exportCSV()">⬇️ Exportar CSV</button>
+                    </div>
+                </div>
+
+                <div id="filter-summary" style="font-size:0.85rem; color:#64748b; font-weight:600; margin-bottom:1rem;"></div>
+
+                <div class="stat-cards" id="stat-cards"></div>
+            </div>
+
+            <!-- PANEL DE DESEMPEÑO ACUMULADO -->
+            <div class="card">
+                <h2 class="section-title" style="background-color:#0f766e;">
+                    <span>📈 Desempeño Acumulado</span>
+                    <div class="view-toggle">
+                        <button id="tg-week" class="tg-btn active" onclick="setPerfView('week')">Por Semana</button>
+                        <button id="tg-month" class="tg-btn" onclick="setPerfView('month')">Por Mes</button>
+                    </div>
+                </h2>
+                <p class="section-subtitle">Puntuación acumulada de todas las evaluaciones de cada periodo. Toca una fila para ver el detalle.</p>
+                <div id="perf-chart" class="perf-chart"></div>
+                <div class="table-wrap" style="max-height:none;">
+                    <table class="data-table" id="perf-table">
+                        <thead><tr><th></th><th>Periodo</th><th>Evaluaciones</th><th>Puntaje Acumulado<div style='font-weight:400; font-size:0.65rem; color:#64748b;'>pts obtenidos / posibles</div></th><th>Limpieza</th><th>Mantenimiento</th><th>Tendencia</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="section-title" style="background-color:#475569;">📋 Tablas de Detalle</h2>
+
+                <h3 style="color:var(--primary); font-size:1rem;">Promedio por Supervisora y Periodo</h3>
+                <div class="table-wrap" style="margin-bottom:1.5rem;">
+                    <table class="data-table" id="summary-table">
+                        <thead><tr><th>Periodo</th><th>Supervisora</th><th>Evaluaciones</th><th>Promedio</th><th>Limpieza</th><th>Mantenimiento</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h3 style="color:var(--primary); font-size:1rem;">Registro Detallado</h3>
+                <div class="table-wrap">
+                    <table class="data-table" id="detail-table">
+                        <thead><tr><th>Fecha</th><th>Semana del mes</th><th>Mes</th><th>Año</th><th>Habitación</th><th>Supervisora</th><th>Auditor</th><th>Puntaje</th><th></th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- INFORME ACUMULADO -->
+            <div class="card">
+                <h2 class="section-title" style="background-color:#1e293b;">
+                    <span>📑 Informe de Evaluación Acumulada</span>
+                    <button class="btn-outline" style="background:white;" onclick="generarInformeAcumulado()">⬇️ Descargar Informe PDF</button>
+                </h2>
+                <p class="section-subtitle">Informe consolidado según los filtros de supervisora y periodo seleccionados arriba.</p>
+                <div id="cumulative-report"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escenario temporal para capturar el PDF -->
+    <div id="pdf-stage"></div>
+
+    <!-- Barra inferior flotante -->
+    <div class="bottom-bar" id="bottom-bar">
+        <div class="bottom-actions">
+            <button class="btn-save" onclick="guardarEvaluacion()">
+                💾 Guardar Evaluación en Historial
+            </button>
+            <button class="btn-pdf" onclick="generarPDF()">
+                📄 Generar Reporte PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    </div> <!-- /#app-root -->
+
+    <script>
+        /* =========================================================
+           PIN DE SEGURIDAD
+           ========================================================= */
+        (function () {
+            const VALID_PINS = ['6284', '1121', '4980'];
+            const SESSION_KEY = 'auditoria_pin_ok';
+
+            const overlay = document.getElementById('pin-lock-overlay');
+            const appRoot = document.getElementById('app-root');
+            const dots = document.querySelectorAll('#pin-dots .dot');
+            const dotsWrap = document.getElementById('pin-dots');
+            const errorMsg = document.getElementById('pin-error-msg');
+            let entered = '';
+
+            function renderDots() {
+                dots.forEach((d, i) => d.classList.toggle('filled', i < entered.length));
+            }
+
+            function unlock() {
+                sessionStorage.setItem(SESSION_KEY, '1');
+                overlay.style.display = 'none';
+                appRoot.classList.remove('pin-locked');
+            }
+
+            function showError() {
+                errorMsg.textContent = 'PIN incorrecto, intenta de nuevo.';
+                dotsWrap.classList.add('shake');
+                setTimeout(() => {
+                    dotsWrap.classList.remove('shake');
+                    entered = '';
+                    renderDots();
+                }, 350);
+            }
+
+            function handleDigit(d) {
+                if (entered.length >= 4) return;
+                entered += d;
+                errorMsg.textContent = '';
+                renderDots();
+                if (entered.length === 4) {
+                    if (VALID_PINS.includes(entered)) {
+                        unlock();
+                    } else {
+                        showError();
+                    }
+                }
+            }
+
+            document.querySelectorAll('#pin-keypad button[data-pin]').forEach(btn => {
+                btn.addEventListener('click', () => handleDigit(btn.dataset.pin));
+            });
+            document.getElementById('pin-back-btn').addEventListener('click', () => {
+                entered = entered.slice(0, -1);
+                errorMsg.textContent = '';
+                renderDots();
+            });
+            document.getElementById('pin-clear-btn').addEventListener('click', () => {
+                entered = '';
+                errorMsg.textContent = '';
+                renderDots();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (overlay.style.display === 'none') return;
+                if (/^[0-9]$/.test(e.key)) handleDigit(e.key);
+                else if (e.key === 'Backspace') document.getElementById('pin-back-btn').click();
+            });
+
+            if (sessionStorage.getItem(SESSION_KEY) === '1') {
+                unlock();
+            }
+        })();
+
+        /* =========================================================
+           CONFIGURACIÓN Y DATOS POR DEFECTO
+           ========================================================= */
+        const DEFAULT_SUPERVISORS = ['María Fernanda', 'Juana Pérez', 'Carmen Rosa'];
+
+        const DEFAULT_MODULE_I = [
+            'Entrada: Olor fresco, sin olores a humedad o químicos.',
+            'Entrada: Puerta, marcos y pisos libres de polvo/manchas.',
+            'Baño: Inodoro desinfectado, tapa bajada, sin marcas.',
+            'Baño: Ducha/Bañera impecable, sin moho ni restos de jabón.',
+            'Baño: Lavamanos y espejos relucientes, grifería brillada.',
+            'Baño: Lencería limpia y doblada; Amenidades completas.',
+            'Habitación: Tendido de cama tenso, sin pelos, almohadas alineadas.',
+            'Habitación: Superficies (altas/bajas) y pisos libres de polvo.',
+            'Habitación: Minibar y café repuestos, nevera limpia.',
+            'Balcón: Cristaleras, rieles, mobiliario y piso limpios.'
+        ].map((text, i) => ({ id: 'l' + (i + 1), text }));
+
+        const DEFAULT_MODULE_II = [
+            'Entrada y Armarios: Puertas, bisagras y herrajes en buen estado.',
+            'Baño - Grifería: Lavamanos y ducha sin fugas, presión correcta.',
+            'Baño - Inodoro: Llaves de paso, latiguillos y sistema sin fugas.',
+            'Baño - Estructura: Espejos, toalleros y mamparas bien fijadas.',
+            'Climatización: AC enfría, sin goteos ni ruidos fuertes.',
+            'Electricidad: Luces, TV, teléfono y tomacorrientes al 100%.'
+        ].map((text, i) => ({ id: 'm' + (i + 1), text }));
+
+        let CONFIG = { supervisors: [], moduleI: [], moduleII: [] };
+
+        /* =========================================================
+           UTILIDADES
+           ========================================================= */
+        function showToast(msg, ms = 3500) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+        }
+
+        function getISOWeek(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        /* Semana 1..5 DENTRO del mes (la que usa el equipo en la práctica) */
+        function getWeekOfMonth(date) {
+            return Math.ceil(date.getDate() / 7);
+        }
+
+        /* Rango de días que cubre una semana del mes, ej. "1–7" */
+        function weekDayRange(year, month, weekNum) {
+            const start = (weekNum - 1) * 7 + 1;
+            const lastDay = new Date(year, month, 0).getDate();
+            const end = Math.min(weekNum * 7, lastDay);
+            return start + '–' + end;
+        }
+
+        /* Deriva la semana del mes aunque el registro sea antiguo */
+        function recWeekOfMonth(r) {
+            if (r.weekOfMonth) return r.weekOfMonth;
+            return getWeekOfMonth(new Date(r.dateISO));
+        }
+
+        /* ---------------------------------------------------------
+           ADAPTADOR DE ALMACENAMIENTO
+           Usa window.storage cuando está disponible (dentro de Claude)
+           y localStorage como respaldo (archivo descargado / navegador).
+           --------------------------------------------------------- */
+        const HAS_CLAUDE_STORAGE = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+        const LS_PREFIX = 'hk_audit_app::';
+
+        const DB = {
+            async get(key) {
+                if (HAS_CLAUDE_STORAGE) {
+                    const res = await window.storage.get(key, false);
+                    return res ? res.value : null;
+                }
+                return localStorage.getItem(LS_PREFIX + key);
+            },
+            async set(key, value) {
+                if (HAS_CLAUDE_STORAGE) {
+                    await window.storage.set(key, value, false);
+                    return;
+                }
+                localStorage.setItem(LS_PREFIX + key, value);
+            },
+            async delete(key) {
+                if (HAS_CLAUDE_STORAGE) {
+                    await window.storage.delete(key, false);
+                    return;
+                }
+                localStorage.removeItem(LS_PREFIX + key);
+            },
+            async list(prefix) {
+                if (HAS_CLAUDE_STORAGE) {
+                    const res = await window.storage.list(prefix, false);
+                    return (res && res.keys) ? res.keys : [];
+                }
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && k.startsWith(LS_PREFIX + prefix)) keys.push(k.slice(LS_PREFIX.length));
+                }
+                return keys;
+            }
+        };
+
+        async function storageGetJSON(key) {
+            try {
+                const raw = await DB.get(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function storageSetJSON(key, value) {
+            try {
+                await DB.set(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                console.error('Error guardando', key, e);
+                return false;
+            }
+        }
+
+        /* =========================================================
+           CARGA / GUARDADO DE CONFIGURACIÓN
+           ========================================================= */
+        async function loadConfig() {
+            let supervisors = await storageGetJSON('config:supervisors');
+            if (!supervisors) {
+                supervisors = DEFAULT_SUPERVISORS.slice();
+                await storageSetJSON('config:supervisors', supervisors);
+            }
+            let moduleI = await storageGetJSON('config:moduleI');
+            if (!moduleI) {
+                moduleI = DEFAULT_MODULE_I;
+                await storageSetJSON('config:moduleI', moduleI);
+            }
+            let moduleII = await storageGetJSON('config:moduleII');
+            if (!moduleII) {
+                moduleII = DEFAULT_MODULE_II;
+                await storageSetJSON('config:moduleII', moduleII);
+            }
+            CONFIG = { supervisors, moduleI, moduleII };
+        }
+
+        async function persistSupervisors() {
+            await storageSetJSON('config:supervisors', CONFIG.supervisors);
+        }
+        async function persistModuleI() {
+            await storageSetJSON('config:moduleI', CONFIG.moduleI);
+        }
+        async function persistModuleII() {
+            await storageSetJSON('config:moduleII', CONFIG.moduleII);
+        }
+
+        /* =========================================================
+           RENDER: SUPERVISORAS
+           ========================================================= */
+        function renderSupervisors() {
+            const datalist = document.getElementById('supervisors-datalist');
+            datalist.innerHTML = CONFIG.supervisors.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
+
+            const chips = document.getElementById('supervisor-chips');
+            if (CONFIG.supervisors.length === 0) {
+                chips.innerHTML = '<span style="font-size:0.8rem; color:#94a3b8;">Sin supervisoras registradas todavía.</span>';
+            } else {
+                chips.innerHTML = CONFIG.supervisors.map(s =>
+                    `<span class="supervisor-chip">${escapeHtml(s)} <button type="button" onclick="removeSupervisor('${escapeAttr(s)}')" title="Eliminar">×</button></span>`
+                ).join('');
+            }
+
+            const filterSelect = document.getElementById('filter-supervisor');
+            const currentFilter = filterSelect.value;
+            filterSelect.innerHTML = '<option value="">Todas</option>' +
+                CONFIG.supervisors.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            filterSelect.value = currentFilter;
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        }
+        function escapeAttr(str) { return String(str).replace(/'/g, "\\'"); }
+
+        function toggleSupervisorPanel() {
+            document.getElementById('supervisor-panel').classList.toggle('active');
+        }
+
+        async function addSupervisorFromPanel() {
+            const input = document.getElementById('new-supervisor-input');
+            const name = input.value.trim();
+            if (!name) return;
+            if (CONFIG.supervisors.includes(name)) {
+                showToast('Esa supervisora ya está registrada.');
+                return;
+            }
+            CONFIG.supervisors.push(name);
+            await persistSupervisors();
+            renderSupervisors();
+            input.value = '';
+            showToast('✅ Supervisora añadida: ' + name);
+        }
+
+        async function saveTypedSupervisor() {
+            const name = document.getElementById('supervisor_name').value.trim();
+            if (!name) {
+                showToast('Escribe primero un nombre en el campo de supervisora.');
+                return;
+            }
+            if (CONFIG.supervisors.includes(name)) {
+                showToast('Esa supervisora ya está en la lista.');
+                return;
+            }
+            CONFIG.supervisors.push(name);
+            await persistSupervisors();
+            renderSupervisors();
+            showToast('✅ Supervisora guardada: ' + name);
+        }
+
+        async function removeSupervisor(name) {
+            if (!confirm('¿Eliminar a "' + name + '" de la lista de supervisoras?')) return;
+            CONFIG.supervisors = CONFIG.supervisors.filter(s => s !== name);
+            await persistSupervisors();
+            renderSupervisors();
+        }
+
+        /* =========================================================
+           RENDER: ÍTEMS DE MÓDULOS (dinámicos)
+           ========================================================= */
+        function renderItemCard(item, index, moduleKey, moduleLabel, radioType) {
+            const labelPos = radioType === 'bueno' ? 'label-bueno' : 'label-cumple';
+            const labelNeg = radioType === 'bueno' ? 'label-averiado' : 'label-nocumple';
+            const textPos = radioType === 'bueno' ? 'Buen Estado' : 'Cumple';
+            const textNeg = radioType === 'bueno' ? 'Averiado' : 'No Cumple';
+            const actionSmall = radioType === 'bueno'
+                ? '<small style="color:var(--danger); font-weight:bold;">🔧 Ticket Generado</small><button class="action-btn" style="border-color:var(--danger); color:var(--danger);">📷 Foto Avería</button>'
+                : '<small>⚠️ Evidencia requerida</small><button class="action-btn">📷 Tomar Foto</button>';
+
+            return `
+                <div class="checklist-item" data-module="${moduleKey}" data-item-id="${item.id}">
+                    <button type="button" class="item-remove" title="Eliminar ítem" onclick="removeItem('${moduleKey}','${item.id}')">🗑️</button>
+                    <div class="item-desc">${index}. ${escapeHtml(item.text)}</div>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" name="${item.id}" value="2" class="score-input" onchange="updateScore(this)"><span class="radio-label ${labelPos}">${textPos}</span></label>
+                        <label class="radio-option"><input type="radio" name="${item.id}" value="0" class="score-input" onchange="updateScore(this)"><span class="radio-label ${labelNeg}">${textNeg}</span></label>
+                    </div>
+                    <div class="action-required">${actionSmall}</div>
+                </div>`;
+        }
+
+        function renderAddItemCard(moduleKey) {
+            return `
+                <div class="add-item-card">
+                    <label style="font-weight:700; color:var(--primary); font-size:0.9rem;">+ Añadir nuevo ítem de evaluación</label>
+                    <input type="text" class="form-control" id="new-item-${moduleKey}" placeholder="Describe el nuevo punto a evaluar...">
+                    <button type="button" onclick="addItem('${moduleKey}')">Agregar Ítem</button>
+                </div>`;
+        }
+
+        function renderModules() {
+            const containerI = document.getElementById('moduleI-items');
+            containerI.innerHTML = CONFIG.moduleI.map((item, i) => renderItemCard(item, i + 1, 'I', 'Limpieza', 'cumple')).join('')
+                + renderAddItemCard('I');
+
+            const containerII = document.getElementById('moduleII-items');
+            const offset = CONFIG.moduleI.length;
+            containerII.innerHTML = CONFIG.moduleII.map((item, i) => renderItemCard(item, offset + i + 1, 'II', 'Mantenimiento', 'bueno')).join('')
+                + renderAddItemCard('II');
+        }
+
+        async function addItem(moduleKey) {
+            const input = document.getElementById('new-item-' + moduleKey);
+            const text = input.value.trim();
+            if (!text) {
+                showToast('Escribe una descripción para el nuevo ítem.');
+                return;
+            }
+            const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
+            const prefix = moduleKey === 'I' ? 'l' : 'm';
+            const nextNum = list.length + 1 + (moduleKey === 'II' ? 100 : 0); // avoid id collisions
+            const id = prefix + '_' + Date.now();
+            list.push({ id, text });
+            if (moduleKey === 'I') { await persistModuleI(); } else { await persistModuleII(); }
+            renderModules();
+            resetScoreDisplay();
+            showToast('✅ Ítem añadido al Módulo ' + moduleKey);
+        }
+
+        async function removeItem(moduleKey, itemId) {
+            if (!confirm('¿Eliminar este ítem de evaluación? Esto no afecta auditorías ya guardadas.')) return;
+            if (moduleKey === 'I') {
+                CONFIG.moduleI = CONFIG.moduleI.filter(it => it.id !== itemId);
+                await persistModuleI();
+            } else {
+                CONFIG.moduleII = CONFIG.moduleII.filter(it => it.id !== itemId);
+                await persistModuleII();
+            }
+            renderModules();
+            resetScoreDisplay();
+        }
+
+        /* =========================================================
+           PUNTUACIÓN
+           ========================================================= */
+        function resetScoreDisplay() {
+            document.getElementById('score-number').innerText = '0';
+            document.getElementById('progress-circle').style.strokeDashoffset = '126';
+            document.getElementById('progress-circle').style.stroke = 'var(--danger)';
+            document.getElementById('score-status-text').innerText = 'Pendiente';
+            document.getElementById('score-status-text').style.color = 'white';
+            document.getElementById('score-module-I').innerText = '--%';
+            document.getElementById('score-module-II').innerText = '--%';
+        }
+
+        function getCurrentScores() {
+            const allInputs = document.querySelectorAll('.score-input:checked');
+            let totalScore = 0, answered = 0, goodCount = 0, badCount = 0;
+            let moduleTotals = { I: { score: 0, answered: 0 }, II: { score: 0, answered: 0 } };
+
+            allInputs.forEach(input => {
+                answered++;
+                totalScore += parseInt(input.value);
+                if (input.value === "2") goodCount++; else badCount++;
+                const mod = input.closest('.checklist-item').dataset.module;
+                if (moduleTotals[mod]) {
+                    moduleTotals[mod].answered++;
+                    moduleTotals[mod].score += parseInt(input.value);
+                }
+            });
+
+            return {
+                answered, goodCount, badCount,
+                // Puntos crudos: cada ítem vale 2 pts (Cumple=2, No cumple=0)
+                points: totalScore,
+                pointsMax: answered * 2,
+                pointsI: moduleTotals.I.score,
+                pointsMaxI: moduleTotals.I.answered * 2,
+                pointsII: moduleTotals.II.score,
+                pointsMaxII: moduleTotals.II.answered * 2,
+                overall: answered > 0 ? Math.round((totalScore / (answered * 2)) * 100) : null,
+                moduleIPct: moduleTotals.I.answered > 0 ? Math.round((moduleTotals.I.score / (moduleTotals.I.answered * 2)) * 100) : null,
+                moduleIIPct: moduleTotals.II.answered > 0 ? Math.round((moduleTotals.II.score / (moduleTotals.II.answered * 2)) * 100) : null
+            };
+        }
+
+        function updateScore(element) {
+            const item = element.closest('.checklist-item');
+            const actionDiv = item.querySelector('.action-required');
+
+            item.classList.remove('status-good', 'status-bad');
+            if (element.value === "2") {
+                item.classList.add('status-good');
+                if (actionDiv) actionDiv.classList.remove('active');
+            } else if (element.value === "0") {
+                item.classList.add('status-bad');
+                if (actionDiv) actionDiv.classList.add('active');
+            }
+
+            const s = getCurrentScores();
+
+            if (s.overall !== null) {
+                document.getElementById('score-number').innerText = s.overall;
+                const circle = document.getElementById('progress-circle');
+                circle.style.strokeDashoffset = 126 - (126 * s.overall) / 100;
+
+                const statusBox = document.getElementById('score-status-text');
+                if (s.overall >= 90) {
+                    circle.style.stroke = 'var(--success)'; statusBox.innerText = "Excelencia"; statusBox.style.color = 'var(--success)';
+                } else if (s.overall >= 80) {
+                    circle.style.stroke = 'var(--warning)'; statusBox.innerText = "Aceptable"; statusBox.style.color = 'var(--warning)';
+                } else {
+                    circle.style.stroke = 'var(--danger)'; statusBox.innerText = "Riesgo"; statusBox.style.color = 'var(--danger)';
+                }
+            }
+
+            document.getElementById('score-module-I').innerText = s.moduleIPct !== null ? s.moduleIPct + '%' : '--%';
+            document.getElementById('score-module-II').innerText = s.moduleIIPct !== null ? s.moduleIIPct + '%' : '--%';
+        }
+
+        function scoreHex(pct) {
+            if (pct === null || pct === undefined) return '#94a3b8';
+            if (pct >= 90) return '#10b981';
+            if (pct >= 80) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        function statusLabel(pct) {
+            if (pct === null || pct === undefined) return 'Sin datos';
+            if (pct >= 90) return 'Excelencia';
+            if (pct >= 80) return 'Aceptable';
+            return 'Riesgo';
+        }
+
+        function gaugeSVG(pct, size, strokeColor) {
+            const shown = pct === null || pct === undefined ? 0 : pct;
+            const r = size / 2 - 7;
+            const c = 2 * Math.PI * r;
+            const offset = c - (c * shown) / 100;
+            return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="9"/>
+                <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="9"
+                    stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+                    transform="rotate(-90 ${size / 2} ${size / 2})"/>
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central"
+                    font-size="${Math.round(size * 0.22)}" font-weight="800" fill="#0f172a">${pct !== null ? pct + '%' : '--'}</text>
+            </svg>`;
+        }
+
+        /* =========================================================
+           GUARDADO DE AUDITORÍA EN HISTORIAL
+           ========================================================= */
+        async function saveAuditRecord() {
+            const s = getCurrentScores();
+            const dateVal = document.getElementById('audit_date').value;
+            const dateObj = dateVal ? new Date(dateVal) : new Date();
+            const record = {
+                ts: Date.now(),
+                dateISO: dateObj.toISOString(),
+                room: document.getElementById('room_number').value || '',
+                auditor: document.getElementById('auditor_name').value || '',
+                supervisor: document.getElementById('supervisor_name').value || '(sin especificar)',
+                comments: document.getElementById('observaciones').value || '',
+                answered: s.answered,
+                points: s.points,
+                pointsMax: s.pointsMax,
+                pointsI: s.pointsI,
+                pointsMaxI: s.pointsMaxI,
+                pointsII: s.pointsII,
+                pointsMaxII: s.pointsMaxII,
+                scoreOverall: s.overall,
+                scoreModuleI: s.moduleIPct,
+                scoreModuleII: s.moduleIIPct,
+                week: getISOWeek(dateObj),
+                weekOfMonth: getWeekOfMonth(dateObj),
+                month: dateObj.getMonth() + 1,
+                year: dateObj.getFullYear()
+            };
+
+            const ok = await storageSetJSON('audit:' + record.ts, record);
+            record._saved = ok;
+
+            // Ensure this supervisor is saved for future reuse
+            if (record.supervisor && record.supervisor !== '(sin especificar)' && !CONFIG.supervisors.includes(record.supervisor)) {
+                CONFIG.supervisors.push(record.supervisor);
+                await persistSupervisors();
+                renderSupervisors();
+            }
+
+            return record;
+        }
+
+        /* =========================================================
+           HISTORIAL / DASHBOARD
+           ========================================================= */
+        async function fetchAllRecords() {
+            try {
+                const keys = await DB.list('audit:');
+                const records = [];
+                for (const key of keys) {
+                    const rec = await storageGetJSON(key);
+                    if (rec) records.push(rec);
+                }
+                records.sort((a, b) => b.ts - a.ts);
+                return records;
+            } catch (e) {
+                console.error('Error leyendo historial', e);
+                return [];
+            }
+        }
+
+        function periodLabel(rec, period) {
+            const shortMonths = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            if (period === 'week') return `Sem ${recWeekOfMonth(rec)} · ${shortMonths[rec.month - 1]} ${rec.year}`;
+            if (period === 'month') return `${shortMonths[rec.month - 1]} ${rec.year}`;
+            return `${rec.year}`;
+        }
+
+        /* Clave numérica para ordenar cronológicamente cualquier periodo */
+        function periodSortKey(rec, period) {
+            if (period === 'week') return rec.year * 10000 + rec.month * 100 + recWeekOfMonth(rec);
+            if (period === 'month') return rec.year * 10000 + rec.month * 100;
+            return rec.year * 10000;
+        }
+
+        let ALL_RECORDS = [];
+
+        const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+        function populateYearFilter() {
+            const sel = document.getElementById('filter-year');
+            const current = sel.value;
+            const years = [...new Set(ALL_RECORDS.map(r => r.year))].sort((a, b) => b - a);
+            sel.innerHTML = '<option value="">Todos</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+            if (years.includes(parseInt(current))) sel.value = current;
+        }
+
+        function getFilteredRecords() {
+            const sup = document.getElementById('filter-supervisor').value;
+            const year = document.getElementById('filter-year').value;
+            const month = document.getElementById('filter-month').value;
+
+            return ALL_RECORDS.filter(r => {
+                if (sup && r.supervisor !== sup) return false;
+                if (year && String(r.year) !== year) return false;
+                if (month && String(r.month) !== month) return false;
+                return true;
+            });
+        }
+
+        function describeFilters() {
+            const sup = document.getElementById('filter-supervisor').value;
+            const year = document.getElementById('filter-year').value;
+            const month = document.getElementById('filter-month').value;
+            const parts = [];
+            if (month) parts.push(MONTH_NAMES[parseInt(month) - 1]);
+            if (year) parts.push(year);
+            if (sup) parts.push('Supervisora: ' + sup);
+            return parts.length ? 'Mostrando: ' + parts.join(' · ') : 'Mostrando: todas las evaluaciones registradas';
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filter-supervisor').value = '';
+            document.getElementById('filter-year').value = '';
+            document.getElementById('filter-month').value = '';
+            renderHistory();
+        }
+
+        async function renderHistory() {
+            ALL_RECORDS = await fetchAllRecords();
+            populateYearFilter();
+
+            const period = document.getElementById('filter-period').value;
+            const records = getFilteredRecords();
+
+            document.getElementById('filter-summary').textContent = describeFilters() + ' — ' + records.length + ' evaluación(es)';
+
+            // Stat cards
+            const total = records.length;
+            const agg = aggregate(records);
+            const best = total > 0 ? Math.max(...records.map(r => r.scoreOverall || 0)) : 0;
+            const worst = total > 0 ? Math.min(...records.map(r => r.scoreOverall || 0)) : 0;
+            document.getElementById('stat-cards').innerHTML = `
+                <div class="stat-card"><div class="num">${total}</div><div class="lbl">Auditorías</div></div>
+                <div class="stat-card"><div class="num" style="color:${scoreHex(agg.overall)}">${agg.overall}%</div><div class="lbl">Acumulado</div><div style="font-size:0.65rem; color:#94a3b8;">${agg.points}/${agg.pointsMax} pts</div></div>
+                <div class="stat-card"><div class="num">${best}%</div><div class="lbl">Mejor auditoría</div></div>
+                <div class="stat-card"><div class="num">${worst}%</div><div class="lbl">Menor auditoría</div></div>
+            `;
+
+            // Summary grouped by period + supervisor
+            const groups = {};
+            records.forEach(r => {
+                const key = periodLabel(r, period) + '|' + r.supervisor;
+                if (!groups[key]) groups[key] = { periodLbl: periodLabel(r, period), supervisor: r.supervisor, items: [], sortKey: periodSortKey(r, period) };
+                groups[key].items.push(r);
+            });
+            const groupArr = Object.values(groups)
+                .map(g => ({ ...g, agg: aggregate(g.items) }))
+                .sort((a, b) => b.sortKey - a.sortKey);
+            document.querySelector('#summary-table tbody').innerHTML = groupArr.map(g => `
+                <tr>
+                    <td>${g.periodLbl}</td>
+                    <td>${escapeHtml(g.supervisor)}</td>
+                    <td>${g.agg.count}</td>
+                    <td><span class="badge" style="background:${scoreColor(g.agg.overall)}">${g.agg.overall}%</span> <span style="font-size:0.65rem; color:#94a3b8;">${g.agg.points}/${g.agg.pointsMax}</span></td>
+                    <td>${g.agg.moduleI !== null ? g.agg.moduleI + '%' : '--'}</td>
+                    <td>${g.agg.moduleII !== null ? g.agg.moduleII + '%' : '--'}</td>
+                </tr>`).join('') || '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Sin datos aún</td></tr>';
+
+            // Detail table
+            document.querySelector('#detail-table tbody').innerHTML = records.map(r => `
+                <tr>
+                    <td>${new Date(r.dateISO).toLocaleDateString('es-ES')}</td>
+                    <td>Sem ${recWeekOfMonth(r)}</td>
+                    <td>${r.month}</td>
+                    <td>${r.year}</td>
+                    <td>${escapeHtml(r.room)}</td>
+                    <td>${escapeHtml(r.supervisor)}</td>
+                    <td>${escapeHtml(r.auditor)}</td>
+                    <td><span class="badge" style="background:${scoreColor(r.scoreOverall)}">${r.scoreOverall ?? '--'}%</span></td>
+                    <td><button class="btn-outline" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="deleteRecord(${r.ts})">🗑️</button></td>
+                </tr>`).join('') || '<tr><td colspan="9" style="text-align:center; color:#94a3b8;">No hay auditorías guardadas todavía</td></tr>';
+
+            renderPerfPanel();
+            renderCumulativeOnScreen();
+        }
+
+        function scoreColor(pct) {
+            if (pct === null || pct === undefined) return '#94a3b8';
+            if (pct >= 90) return 'var(--success)';
+            if (pct >= 80) return 'var(--warning)';
+            return 'var(--danger)';
+        }
+
+        async function deleteRecord(ts) {
+            if (!confirm('¿Eliminar esta auditoría del historial permanentemente?')) return;
+            try {
+                await DB.delete('audit:' + ts);
+                showToast('Registro eliminado.');
+                renderHistory();
+            } catch (e) {
+                showToast('No se pudo eliminar el registro.');
+            }
+        }
+
+        function exportCSV() {
+            const data = getFilteredRecords();
+            if (!data.length) { showToast('No hay datos para exportar con los filtros actuales.'); return; }
+            const headers = ['Fecha','Semana del mes','Mes','Año','Habitación','Supervisora','Auditor','Puntos Obtenidos','Puntos Posibles','Puntaje General %','Limpieza %','Mantenimiento %','Observaciones'];
+            const rows = data.map(r => [
+                new Date(r.dateISO).toLocaleDateString('es-ES'), recWeekOfMonth(r), r.month, r.year, r.room,
+                r.supervisor, r.auditor, recPoints(r).p, recPoints(r).max, r.scoreOverall, r.scoreModuleI, r.scoreModuleII, (r.comments || '').replace(/[\r\n]+/g, ' ')
+            ]);
+            const csv = [headers, ...rows].map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Historial_Auditorias_Housekeeping.csv';
+            link.click();
+        }
+
+        /* =========================================================
+           TABS
+           ========================================================= */
+        function switchTab(name) {
+            document.getElementById('view-audit').classList.toggle('active', name === 'audit');
+            document.getElementById('view-history').classList.toggle('active', name === 'history');
+            document.getElementById('tab-btn-audit').classList.toggle('active', name === 'audit');
+            document.getElementById('tab-btn-history').classList.toggle('active', name === 'history');
+            document.getElementById('bottom-bar').style.display = name === 'audit' ? 'flex' : 'none';
+            if (name === 'history') renderHistory();
+        }
+
+        /* =========================================================
+           GENERACIÓN DE PDF
+           ========================================================= */
+        function buildAttentionList() {
+            const badItems = document.querySelectorAll('.checklist-item.status-bad');
+            const items = [];
+            badItems.forEach(el => {
+                const mod = el.dataset.module;
+                let desc = el.querySelector('.item-desc').textContent.trim();
+                desc = desc.replace(/^\d+\.\s*/, '');
+                items.push({ mod, desc });
+            });
+            return items;
+        }
+
+        function buildReportHTML(record, attentionItems) {
+            const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const dateObj = new Date(record.dateISO);
+            const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+            const attentionHTML = attentionItems.length === 0
+                ? `<div class="pdf-attention-empty">✅ Todos los puntos evaluados cumplen el estándar. Ninguna incidencia registrada.</div>`
+                : attentionItems.map(it => `
+                    <div class="pdf-attention-item">
+                        <span>${escapeHtml(it.desc)}</span>
+                        <span class="mod-tag">${it.mod === 'I' ? 'LIMPIEZA' : 'MANTENIMIENTO'}</span>
+                    </div>`).join('');
+
+            const commentsHTML = record.comments && record.comments.trim()
+                ? escapeHtml(record.comments)
+                : '<span style="color:#94a3b8;">Sin observaciones adicionales.</span>';
+
+            return `
+                <div class="pdf-report-header">
+                    <div>
+                        <h1>Reporte de Auditoría — Habitación ${escapeHtml(record.room)}</h1>
+                        <div class="sub">${dateStr} · ${timeStr} · Semana ${record.week} / ${record.year}</div>
+                    </div>
+                    <div class="badge-status" style="background:${scoreHex(record.scoreOverall)};">${statusLabel(record.scoreOverall)}</div>
+                </div>
+
+                <div class="pdf-meta-grid">
+                    <div class="pdf-meta-item"><div class="lbl">Supervisora</div><div class="val">${escapeHtml(record.supervisor)}</div></div>
+                    <div class="pdf-meta-item"><div class="lbl">Auditor</div><div class="val">${escapeHtml(record.auditor || '—')}</div></div>
+                    <div class="pdf-meta-item"><div class="lbl">Ítems Evaluados</div><div class="val">${record.answered}</div></div>
+                    <div class="pdf-meta-item"><div class="lbl">Puntaje General</div><div class="val" style="color:${scoreHex(record.scoreOverall)};">${record.scoreOverall}% <span style="font-size:0.7rem; color:#64748b; font-weight:600;">(${record.points ?? 0}/${record.pointsMax ?? 0} pts)</span></div></div>
+                </div>
+
+                <div class="pdf-gauges">
+                    <div class="pdf-gauge-block">
+                        ${gaugeSVG(record.scoreOverall, 110, scoreHex(record.scoreOverall))}
+                        <div class="pdf-gauge-label">General</div>
+                        <div class="pdf-gauge-sub">${statusLabel(record.scoreOverall)}</div>
+                    </div>
+                    <div class="pdf-gauge-block">
+                        ${gaugeSVG(record.scoreModuleI, 80, scoreHex(record.scoreModuleI))}
+                        <div class="pdf-gauge-label">Limpieza</div>
+                        <div class="pdf-gauge-sub">Módulo I</div>
+                    </div>
+                    <div class="pdf-gauge-block">
+                        ${gaugeSVG(record.scoreModuleII, 80, scoreHex(record.scoreModuleII))}
+                        <div class="pdf-gauge-label">Mantenimiento</div>
+                        <div class="pdf-gauge-sub">Módulo II</div>
+                    </div>
+                </div>
+
+                <div class="pdf-summary-counts">
+                    <div class="pdf-count-box"><div class="num" style="color:#10b981;">${record.answered - attentionItems.length}</div><div class="lbl">Cumplen</div></div>
+                    <div class="pdf-count-box"><div class="num" style="color:#ef4444;">${attentionItems.length}</div><div class="lbl">No Cumplen</div></div>
+                    <div class="pdf-count-box"><div class="num" style="color:#0f172a;">${record.answered}</div><div class="lbl">Total Evaluado</div></div>
+                </div>
+
+                <div class="pdf-section-title">⚠️ Puntos que Requieren Atención</div>
+                ${attentionHTML}
+
+                <div class="pdf-section-title">📝 Observaciones</div>
+                <div class="pdf-obs">${commentsHTML}</div>
+
+                <div class="pdf-footer">Reporte generado automáticamente · Auditoría Integral Housekeeping · ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}</div>
+            `;
+        }
+
+        /* ---------- Captura genérica: monta el HTML VISIBLE y lo exporta ---------- */
+        async function exportarPDF(innerHTML, filename) {
+            const stage = document.getElementById('pdf-stage');
+            stage.innerHTML = '<div class="pdf-report" id="pdf-report-content">' + innerHTML + '</div>';
+            stage.classList.add('active');
+
+            const target = document.getElementById('pdf-report-content');
+
+            // Espera a que el navegador pinte el contenido antes de capturarlo
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            await new Promise(r => setTimeout(r, 300));
+
+            const opt = {
+                margin: [0.4, 0.4, 0.4, 0.4],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 900 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+
+            try {
+                await html2pdf().set(opt).from(target).save();
+            } catch (e) {
+                console.error('Error generando PDF', e);
+                showToast('Hubo un problema generando el PDF.');
+            } finally {
+                stage.classList.remove('active');
+                stage.innerHTML = '';
+            }
+        }
+
+        function limpiarFormulario(avanzarHabitacion) {
+            const room = document.getElementById('room_number').value;
+            if (avanzarHabitacion) {
+                const nextRoom = parseInt(room);
+                if (!isNaN(nextRoom)) document.getElementById('room_number').value = nextRoom + 1;
+            }
+            document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+            document.querySelectorAll('.checklist-item').forEach(item => item.classList.remove('status-good', 'status-bad'));
+            document.querySelectorAll('.action-required').forEach(a => a.classList.remove('active'));
+            document.getElementById('observaciones').value = "";
+            resetScoreDisplay();
+            window.scrollTo(0, 0);
+        }
+
+        /* ---------- BOTÓN 1: Guardar evaluación en el historial (independiente del PDF) ---------- */
+        async function guardarEvaluacion() {
+            const s = getCurrentScores();
+            if (s.answered === 0) {
+                showToast('Responde al menos un ítem antes de guardar.');
+                return;
+            }
+            const btn = document.querySelector('.btn-save');
+            const original = btn.innerHTML;
+            btn.innerHTML = '⏳ Guardando...';
+
+            const record = await saveAuditRecord();
+
+            btn.innerHTML = original;
+
+            if (!record._saved) {
+                showToast('⚠️ No se pudo guardar la evaluación. Revisa el almacenamiento del navegador (modo privado lo bloquea).', 6000);
+                return;
+            }
+
+            // Refresca el historial inmediatamente para que el resultado se vea
+            await renderHistory();
+
+            showToast('✅ Evaluación guardada (Hab. ' + record.room + ' — ' + record.scoreOverall + '%). Revisa la pestaña "Historial y Métricas".', 5000);
+            limpiarFormulario(true);
+        }
+
+        /* ---------- BOTÓN 2: Generar reporte PDF (no guarda nada) ---------- */
+        async function generarPDF() {
+            const s = getCurrentScores();
+            if (s.answered === 0) {
+                showToast('Responde al menos un ítem antes de generar el PDF.');
+                return;
+            }
+
+            const btn = document.querySelector('.btn-pdf');
+            const original = btn.innerHTML;
+            btn.innerHTML = '⏳ Generando PDF...';
+
+            const dateVal = document.getElementById('audit_date').value;
+            const dateObj = dateVal ? new Date(dateVal) : new Date();
+            const record = {
+                dateISO: dateObj.toISOString(),
+                room: document.getElementById('room_number').value || '',
+                auditor: document.getElementById('auditor_name').value || '',
+                supervisor: document.getElementById('supervisor_name').value || '(sin especificar)',
+                comments: document.getElementById('observaciones').value || '',
+                answered: s.answered,
+                scoreOverall: s.overall,
+                scoreModuleI: s.moduleIPct,
+                scoreModuleII: s.moduleIIPct,
+                week: getISOWeek(dateObj),
+                year: dateObj.getFullYear()
+            };
+
+            await exportarPDF(
+                buildReportHTML(record, buildAttentionList()),
+                'Reporte_Auditoria_Hab_' + record.room + '.pdf'
+            );
+
+            btn.innerHTML = original;
+        }
+
+        /* =========================================================
+           INFORME ACUMULADO
+           ========================================================= */
+        function buildCumulativeHTML(records, period, filterLabel) {
+            const total = records.length;
+            const AGG = aggregate(records);
+            const avg = AGG.overall, avgI = AGG.moduleI, avgII = AGG.moduleII;
+
+            // Agrupado por periodo (tendencia)
+            const periodArr = groupByPeriod(records, period).slice(-10);
+
+            // Agrupado por supervisora (ranking)
+            const bySup = {};
+            records.forEach(r => {
+                if (!bySup[r.supervisor]) bySup[r.supervisor] = { name: r.supervisor, items: [] };
+                bySup[r.supervisor].items.push(r);
+            });
+            const supArr = Object.values(bySup)
+                .map(g => ({ name: g.name, agg: aggregate(g.items) }))
+                .sort((a, b) => b.agg.overall - a.agg.overall);
+
+            const maxBarH = 90;
+            const barsHTML = periodArr.map(p => {
+                const val = p.avg;
+                const h = Math.max(4, Math.round((val / 100) * maxBarH));
+                return '<div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:56px;">' +
+                    '<div style="font-size:0.7rem; font-weight:800; color:' + scoreHex(val) + '; margin-bottom:3px;">' + val + '%</div>' +
+                    '<div style="width:28px; height:' + h + 'px; background:' + scoreHex(val) + '; border-radius:4px 4px 0 0;"></div>' +
+                    '<div style="font-size:0.6rem; color:#64748b; margin-top:5px; text-align:center;">' + p.lbl + '</div>' +
+                    '<div style="font-size:0.55rem; color:#94a3b8;">' + p.count + ' aud. &middot; ' + p.points + '/' + p.pointsMax + '</div></div>';
+            }).join('');
+
+            const rankHTML = supArr.map((g, i) => {
+                const val = g.agg.overall;
+                return '<div style="margin-bottom:10px;">' +
+                    '<div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700; margin-bottom:3px;">' +
+                    '<span>' + (i + 1) + '. ' + escapeHtml(g.name) + ' <span style="color:#94a3b8; font-weight:500;">(' + g.agg.count + ' aud. &middot; ' + g.agg.points + '/' + g.agg.pointsMax + ' pts)</span></span>' +
+                    '<span style="color:' + scoreHex(val) + ';">' + val + '%</span></div>' +
+                    '<div style="background:#e2e8f0; border-radius:5px; height:11px; overflow:hidden;">' +
+                    '<div style="width:' + val + '%; height:100%; background:' + scoreHex(val) + '; border-radius:5px;"></div></div>' +
+                    '<div style="font-size:0.62rem; color:#64748b; margin-top:2px;">Limpieza: ' + (g.agg.moduleI !== null ? g.agg.moduleI + '%' : '--') + ' &middot; Mantenimiento: ' + (g.agg.moduleII !== null ? g.agg.moduleII + '%' : '--') + '</div></div>';
+            }).join('');
+
+            const periodName = period === 'week' ? 'Semanal' : (period === 'month' ? 'Mensual' : 'Anual');
+            const unitName = period === 'week' ? 'Semana' : (period === 'month' ? 'Mes' : 'Año');
+            const sorted = records.slice().sort((a, b) => new Date(a.dateISO) - new Date(b.dateISO));
+            const rangeTxt = total ? (new Date(sorted[0].dateISO).toLocaleDateString('es-ES') + ' — ' + new Date(sorted[sorted.length - 1].dateISO).toLocaleDateString('es-ES')) : '—';
+
+            return '' +
+                '<div class="pdf-report-header"><div>' +
+                '<h1>Informe Acumulado ' + periodName + '</h1>' +
+                '<div class="sub">Periodo cubierto: ' + rangeTxt + (filterLabel ? ' &middot; ' + escapeHtml(filterLabel) : '') + '</div>' +
+                '</div><div class="badge-status" style="background:' + scoreHex(avg) + ';">' + statusLabel(avg) + '</div></div>' +
+
+                '<div class="pdf-gauges">' +
+                '<div class="pdf-gauge-block">' + gaugeSVG(avg, 110, scoreHex(avg)) + '<div class="pdf-gauge-label">Acumulado General</div><div class="pdf-gauge-sub">' + total + ' auditorías &middot; ' + AGG.points + '/' + AGG.pointsMax + ' pts</div></div>' +
+                '<div class="pdf-gauge-block">' + gaugeSVG(avgI, 80, scoreHex(avgI)) + '<div class="pdf-gauge-label">Limpieza</div><div class="pdf-gauge-sub">Módulo I</div></div>' +
+                '<div class="pdf-gauge-block">' + gaugeSVG(avgII, 80, scoreHex(avgII)) + '<div class="pdf-gauge-label">Mantenimiento</div><div class="pdf-gauge-sub">Módulo II</div></div>' +
+                '</div>' +
+
+                '<div class="pdf-summary-counts">' +
+                '<div class="pdf-count-box"><div class="num" style="color:#0f172a;">' + total + '</div><div class="lbl">Auditorías</div></div>' +
+                '<div class="pdf-count-box"><div class="num" style="color:#10b981;">' + (total ? Math.max.apply(null, records.map(r => r.scoreOverall || 0)) : 0) + '%</div><div class="lbl">Mejor puntaje</div></div>' +
+                '<div class="pdf-count-box"><div class="num" style="color:#ef4444;">' + (total ? Math.min.apply(null, records.map(r => r.scoreOverall || 0)) : 0) + '%</div><div class="lbl">Menor puntaje</div></div>' +
+                '<div class="pdf-count-box"><div class="num" style="color:#0f172a;">' + supArr.length + '</div><div class="lbl">Supervisoras</div></div>' +
+                '</div>' +
+
+                '<div class="pdf-section-title">📈 Tendencia por ' + unitName + '</div>' +
+                '<div style="display:flex; align-items:flex-end; gap:12px; padding:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; flex-wrap:wrap;">' +
+                (barsHTML || '<span style="color:#94a3b8; font-size:0.8rem;">Sin datos</span>') + '</div>' +
+
+                '<div class="pdf-section-title">🏅 Desempeño por Supervisora</div>' +
+                (rankHTML || '<span style="color:#94a3b8; font-size:0.8rem;">Sin datos</span>') +
+
+                '<div class="pdf-footer">Informe acumulado generado automáticamente &middot; Auditoría Integral Housekeeping &middot; ' + new Date().toLocaleDateString('es-ES') + '</div>';
+        }
+
+        /* =========================================================
+           PANEL DE DESEMPEÑO ACUMULADO (Semana / Mes)
+           ========================================================= */
+        let PERF_VIEW = 'week';
+        let PERF_OPEN = null;
+
+        function setPerfView(view) {
+            PERF_VIEW = view;
+            document.getElementById('tg-week').classList.toggle('active', view === 'week');
+            document.getElementById('tg-month').classList.toggle('active', view === 'month');
+            PERF_OPEN = null;
+            renderPerfPanel();
+        }
+
+        /* ---------------------------------------------------------
+           PUNTUACIÓN PONDERADA
+           El acumulado de un periodo = puntos obtenidos / puntos posibles.
+           NO es un promedio de porcentajes: así una auditoría de 16 ítems
+           pesa más que una de 4 ítems, que es lo lógico.
+           Cada ítem vale 2 pts (Cumple/Buen Estado = 2, No Cumple/Averiado = 0).
+           --------------------------------------------------------- */
+        function recPoints(r) {
+            if (typeof r.points === 'number' && typeof r.pointsMax === 'number') {
+                return { p: r.points, max: r.pointsMax };
+            }
+            // Registros antiguos: reconstruye desde el % y el nº de ítems
+            const max = (r.answered || 0) * 2;
+            return { p: Math.round(((r.scoreOverall || 0) / 100) * max), max };
+        }
+
+        function recPointsModule(r, mod) {
+            const pKey = mod === 'I' ? 'pointsI' : 'pointsII';
+            const mKey = mod === 'I' ? 'pointsMaxI' : 'pointsMaxII';
+            if (typeof r[pKey] === 'number' && typeof r[mKey] === 'number') {
+                return { p: r[pKey], max: r[mKey] };
+            }
+            const pct = mod === 'I' ? r.scoreModuleI : r.scoreModuleII;
+            if (pct === null || pct === undefined) return { p: 0, max: 0 };
+            return { p: 0, max: 0, pctOnly: pct };
+        }
+
+        /* Acumulado ponderado de un conjunto de registros */
+        function aggregate(records) {
+            let p = 0, max = 0;
+            let pI = 0, maxI = 0, pctI = [], pII = 0, maxII = 0, pctII = [];
+            records.forEach(r => {
+                const t = recPoints(r); p += t.p; max += t.max;
+                const a = recPointsModule(r, 'I');
+                if (a.pctOnly !== undefined) pctI.push(a.pctOnly); else { pI += a.p; maxI += a.max; }
+                const b = recPointsModule(r, 'II');
+                if (b.pctOnly !== undefined) pctII.push(b.pctOnly); else { pII += b.p; maxII += b.max; }
+            });
+            const pctOf = (num, den, fallback) => {
+                if (den > 0) return Math.round((num / den) * 100);
+                if (fallback.length) return Math.round(fallback.reduce((x, y) => x + y, 0) / fallback.length);
+                return null;
+            };
+            return {
+                count: records.length,
+                points: p, pointsMax: max,
+                overall: max > 0 ? Math.round((p / max) * 100) : 0,
+                moduleI: pctOf(pI, maxI, pctI),
+                moduleII: pctOf(pII, maxII, pctII)
+            };
+        }
+
+        function groupByPeriod(records, period) {
+            const groups = {};
+            records.forEach(r => {
+                const lbl = periodLabel(r, period);
+                if (!groups[lbl]) {
+                    groups[lbl] = {
+                        lbl, key: periodSortKey(r, period), items: [],
+                        range: period === 'week' ? weekDayRange(r.year, r.month, recWeekOfMonth(r)) : null
+                    };
+                }
+                groups[lbl].items.push(r);
+            });
+            return Object.values(groups)
+                .map(g => {
+                    const agg = aggregate(g.items);
+                    return { ...g, count: agg.count, avg: agg.overall, points: agg.points, pointsMax: agg.pointsMax, pctI: agg.moduleI, pctII: agg.moduleII };
+                })
+                .sort((a, b) => a.key - b.key);
+        }
+
+        function renderPerfPanel() {
+            const records = getFilteredRecords();
+            const groups = groupByPeriod(records, PERF_VIEW);
+            const chart = document.getElementById('perf-chart');
+            const tbody = document.querySelector('#perf-table tbody');
+
+            if (!groups.length) {
+                chart.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem; margin:auto;">No hay evaluaciones para mostrar con los filtros actuales.</div>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Sin datos</td></tr>';
+                return;
+            }
+
+            const maxH = 110;
+            chart.innerHTML = groups.map(g => {
+                const h = Math.max(5, Math.round((g.avg / 100) * maxH));
+                return `<div class="perf-bar-col">
+                    <div class="perf-bar-val" style="color:${scoreHex(g.avg)};">${g.avg}%</div>
+                    <div class="perf-bar" style="height:${h}px; background:${scoreHex(g.avg)};"></div>
+                    <div class="perf-bar-lbl">${g.lbl}</div>
+                    <div class="perf-bar-sub">${g.count} eval. · ${g.points}/${g.pointsMax} pts${g.range ? '<br>días ' + g.range : ''}</div>
+                </div>`;
+            }).join('');
+
+            const ordered = groups.slice().reverse();
+            tbody.innerHTML = ordered.map((g, idx) => {
+                const prev = ordered[idx + 1];
+                let trend = '<span style="color:#94a3b8;">—</span>';
+                if (prev) {
+                    const diff = g.avg - prev.avg;
+                    if (diff > 0) trend = `<span style="color:#10b981; font-weight:700;">▲ +${diff} pts</span>`;
+                    else if (diff < 0) trend = `<span style="color:#ef4444; font-weight:700;">▼ ${diff} pts</span>`;
+                    else trend = '<span style="color:#64748b;">＝ igual</span>';
+                }
+
+                const isOpen = PERF_OPEN === g.lbl;
+                const detail = isOpen ? `
+                    <tr class="perf-detail-row"><td colspan="7"><div class="perf-detail-inner">
+                        ${g.items.slice().sort((a, b) => new Date(a.dateISO) - new Date(b.dateISO)).map(r => `
+                            <div class="perf-detail-line">
+                                <span>${new Date(r.dateISO).toLocaleDateString('es-ES')} · Hab. ${escapeHtml(r.room)} · ${escapeHtml(r.supervisor)}</span>
+                                <span style="font-weight:700; color:${scoreHex(r.scoreOverall)};">${r.scoreOverall}%</span>
+                            </div>`).join('')}
+                    </div></td></tr>` : '';
+
+                return `
+                    <tr class="perf-row" onclick="togglePerfRow('${escapeAttr(g.lbl)}')">
+                        <td style="width:22px; color:#94a3b8;">${isOpen ? '▾' : '▸'}</td>
+                        <td><b>${g.lbl}</b>${g.range ? `<div style="font-size:0.68rem; color:#94a3b8;">días ${g.range}</div>` : ''}</td>
+                        <td>${g.count}</td>
+                        <td><span class="badge" style="background:${scoreHex(g.avg)}">${g.avg}%</span><div style="font-size:0.65rem; color:#94a3b8;">${g.points}/${g.pointsMax} pts</div></td>
+                        <td>${g.pctI !== null ? g.pctI + '%' : '--'}</td>
+                        <td>${g.pctII !== null ? g.pctII + '%' : '--'}</td>
+                        <td>${trend}</td>
+                    </tr>${detail}`;
+            }).join('');
+        }
+
+        function togglePerfRow(lbl) {
+            PERF_OPEN = (PERF_OPEN === lbl) ? null : lbl;
+            renderPerfPanel();
+        }
+
+        function renderCumulativeOnScreen() {
+            const box = document.getElementById('cumulative-report');
+            if (!box) return;
+            const records = getFilteredRecords();
+            const period = document.getElementById('filter-period').value;
+            if (!records.length) {
+                box.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:1.5rem;">No hay evaluaciones que coincidan con los filtros seleccionados.</p>';
+                return;
+            }
+            box.innerHTML = buildCumulativeHTML(records, period, describeFilters().replace('Mostrando: ', ''));
+        }
+
+        async function generarInformeAcumulado() {
+            const records = getFilteredRecords();
+            if (!records.length) { showToast('No hay evaluaciones guardadas para generar el informe.'); return; }
+            const period = document.getElementById('filter-period').value;
+            showToast('⏳ Generando informe acumulado...');
+            const yr = document.getElementById('filter-year').value;
+            const mo = document.getElementById('filter-month').value;
+            const nameParts = ['Informe_Acumulado'];
+            if (mo) nameParts.push(MONTH_NAMES[parseInt(mo) - 1]);
+            if (yr) nameParts.push(yr);
+            await exportarPDF(buildCumulativeHTML(records, period, describeFilters().replace('Mostrando: ', '')), nameParts.join('_') + '.pdf');
+        }
+
+        /* =========================================================
+           INICIALIZACIÓN
+           ========================================================= */
+        async function init() {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('audit_date').value =
+                `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+            await loadConfig();
+            renderSupervisors();
+            renderModules();
+            resetScoreDisplay();
+
+            // Verifica que el almacenamiento realmente funcione
+            try {
+                await DB.set('__test__', '1');
+                await DB.delete('__test__');
+            } catch (e) {
+                showToast('⚠️ Este navegador está bloqueando el almacenamiento (modo privado/incógnito). Las evaluaciones no se podrán guardar.', 8000);
+            }
+        }
+
+        init();
+
+        // Registro del Service Worker (funciona offline una vez desplegado en HTTPS)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW no registrado:', err));
+            });
+        }
+    </script>
+</body>
+</html>
