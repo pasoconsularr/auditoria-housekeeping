@@ -45,6 +45,17 @@
             text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.35);
         }
+        /* Sin zoom al tocar dos veces seguidas.
+           En el teclado del PIN y en los botones Cumple/No Cumple se toca
+           rápido y repetido, y el navegador lo interpretaba como doble toque
+           para ampliar. Esto lo desactiva SOLO en los controles: el pellizco
+           para ampliar la pantalla o una foto sigue funcionando. */
+        button, select, input, textarea, label,
+        .radio-option, .radio-label, .qr-btn, .sev-chip, .action-btn,
+        .evi-add, .rank-card, .row-click, .tab-btn, .tg-btn, .report-btn {
+            touch-action: manipulation;
+        }
+
         #pin-lock-overlay .pin-icon { font-size: 2.5rem; margin-bottom: 0.25rem; }
         #pin-lock-overlay h2 { margin: 0.25rem 0 0.25rem; font-size: 1.15rem; color: #0f172a; }
         #pin-lock-overlay p.pin-sub { margin: 0 0 1.25rem; font-size: 0.85rem; color: #64748b; }
@@ -651,6 +662,55 @@
         }
         .sev-opt-critico { border-color: #fca5a5; background: #fef2f2; color: #b91c1c; }
         .sev-opt-leve { color: #94a3b8; }
+
+        /* Etiqueta de solo lectura que ve el auditor */
+        .sev-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-family: inherit;
+            font-size: 0.66rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            padding: 0.22rem 0.5rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-light);
+            background: #f8fafc;
+            color: #475569;
+            cursor: pointer;
+        }
+        .sev-chip.sev-opt-critico { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+        .sev-chip.sev-opt-leve { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; }
+        .sev-chip .sev-lock { opacity: 0.45; font-size: 0.6rem; }
+        .sev-chip:hover { border-color: var(--primary); }
+
+        /* Aviso de que el modo configuración está abierto */
+        #config-banner { display: none; }
+        #config-banner.show {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #92400e;
+        }
+        #config-banner button {
+            border: 1px solid #f59e0b;
+            background: #fff;
+            color: #b45309;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.74rem;
+            padding: 0.32rem 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
         .sev-warn {
             font-size: 0.63rem;
             font-weight: 700;
@@ -1374,6 +1434,7 @@
     <div class="view-section active" id="view-audit">
     <div id="pdf-content">
         <div class="container">
+            <div id="config-banner"></div>
             <!-- Datos de Inspección -->
             <div class="card">
                 <h2 class="section-title">📄 Datos de la Inspección</h2>
@@ -2132,9 +2193,62 @@
         }
 
         /* =========================================================
-           PIN DE ADMINISTRADOR PARA ACCIONES QUE BORRAN
+           PIN DE ADMINISTRADOR Y MODO CONFIGURACIÓN
+           La severidad y el borrado definen el ESTÁNDAR con el que se mide,
+           no la inspección: si el auditor pudiera cambiarlos durante la ronda,
+           los puntajes dejarían de ser comparables entre auditorías.
+           Por eso van detrás del PIN. Añadir ítems sí queda libre.
+           El desbloqueo dura unos minutos para no pedir el PIN en cada ítem,
+           y no sobrevive a una recarga de la página.
            ========================================================= */
         const ADMIN_PIN = '6284';
+        const CONFIG_MINUTOS = 5;
+        let CONFIG_UNLOCK_UNTIL = 0;
+        let CONFIG_TIMER = null;
+
+        function configDesbloqueado() {
+            return Date.now() < CONFIG_UNLOCK_UNTIL;
+        }
+
+        /* Pide el PIN solo si el modo configuración no está activo. */
+        async function pedirConfig(titulo, detalle) {
+            if (configDesbloqueado()) return true;
+            const ok = await askAdminPin(titulo, detalle);
+            if (ok) activarModoConfig();
+            return ok;
+        }
+
+        function activarModoConfig() {
+            CONFIG_UNLOCK_UNTIL = Date.now() + CONFIG_MINUTOS * 60000;
+            renderModules();
+            pintarBannerConfig();
+            clearInterval(CONFIG_TIMER);
+            CONFIG_TIMER = setInterval(() => {
+                if (!configDesbloqueado()) { bloquearModoConfig(); return; }
+                pintarBannerConfig();
+            }, 1000);
+        }
+
+        function bloquearModoConfig() {
+            CONFIG_UNLOCK_UNTIL = 0;
+            clearInterval(CONFIG_TIMER);
+            CONFIG_TIMER = null;
+            renderModules();
+            pintarBannerConfig();
+            showToast('🔒 Modo configuración bloqueado.', 2500);
+        }
+
+        function pintarBannerConfig() {
+            const b = document.getElementById('config-banner');
+            if (!b) return;
+            if (!configDesbloqueado()) { b.classList.remove('show'); b.innerHTML = ''; return; }
+            const seg = Math.max(0, Math.ceil((CONFIG_UNLOCK_UNTIL - Date.now()) / 1000));
+            const mm = String(Math.floor(seg / 60)).padStart(2, '0');
+            const ss = String(seg % 60).padStart(2, '0');
+            b.classList.add('show');
+            b.innerHTML = `<span>🔓 <b>Modo configuración activo</b> — puedes cambiar la severidad y eliminar ítems. Se bloquea solo en ${mm}:${ss}.</span>
+                           <button type="button" onclick="bloquearModoConfig()">Bloquear ahora</button>`;
+        }
 
         function askAdminPin(titulo, detalle) {
             return new Promise(resolve => {
@@ -2197,12 +2311,18 @@
                     <button type="button" class="item-remove" title="Eliminar ítem" onclick="removeItem('${moduleKey}','${item.id}')">🗑️</button>
                     <div class="item-desc">${index}. ${escapeHtml(item.text)}</div>
                     <div class="sev-row">
-                        <label>Severidad</label>
-                        <select class="sev-select sev-opt-${sev}" onchange="setItemSeverity('${moduleKey}','${escapeAttr(item.id)}', this.value)">
-                            <option value="leve" ${sev === 'leve' ? 'selected' : ''}>Leve · 1 pt</option>
-                            <option value="normal" ${sev === 'normal' ? 'selected' : ''}>Normal · 2 pts</option>
-                            <option value="critico" ${sev === 'critico' ? 'selected' : ''}>Crítico · 4 pts</option>
-                        </select>
+                        ${configDesbloqueado() ? `
+                            <label>Severidad</label>
+                            <select class="sev-select sev-opt-${sev}" onchange="setItemSeverity('${moduleKey}','${escapeAttr(item.id)}', this.value)">
+                                <option value="leve" ${sev === 'leve' ? 'selected' : ''}>Leve · 1 pt</option>
+                                <option value="normal" ${sev === 'normal' ? 'selected' : ''}>Normal · 2 pts</option>
+                                <option value="critico" ${sev === 'critico' ? 'selected' : ''}>Crítico · 4 pts</option>
+                            </select>`
+                        : `<button type="button" class="sev-chip sev-opt-${sev}"
+                                   title="Cambiar la severidad requiere el PIN de administrador"
+                                   onclick="editarSeveridad('${moduleKey}','${escapeAttr(item.id)}')">
+                                ${SEVERITIES[sev].corto} · ${SEVERITIES[sev].peso} pt${SEVERITIES[sev].peso > 1 ? 's' : ''} <span class="sev-lock">🔒</span>
+                           </button>`}
                         ${sev === 'critico' ? '<span class="sev-warn">Si falla, habitación no ocupable</span>' : ''}
                     </div>
                     <div class="radio-group">
@@ -2268,8 +2388,20 @@
             });
         }
 
+        /* Al tocar la etiqueta de severidad se pide el PIN y se entra al modo
+           configuración; el propio re-render deja los selectores a la vista. */
+        async function editarSeveridad(moduleKey, itemId) {
+            const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
+            const item = list.find(it => it.id === itemId);
+            await pedirConfig(
+                'Cambiar severidad',
+                item ? item.text : 'Define cuánto pesa este punto en la evaluación.'
+            );
+        }
+
         async function setItemSeverity(moduleKey, itemId, sev) {
             if (!SEVERITIES[sev]) return;
+            if (!configDesbloqueado()) { renderModules(); return; }
             const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
             const item = list.find(it => it.id === itemId);
             if (!item) return;
@@ -2285,7 +2417,7 @@
         async function removeItem(moduleKey, itemId) {
             const list = moduleKey === 'I' ? CONFIG.moduleI : CONFIG.moduleII;
             const item = list.find(it => it.id === itemId);
-            const ok = await askAdminPin(
+            const ok = await pedirConfig(
                 'Eliminar ítem de evaluación',
                 item ? item.text : 'Este ítem se quitará del checklist.'
             );
@@ -3034,11 +3166,31 @@
             else renderSupervisorRanking(records, el, titleEl, hintEl);
         }
 
+        /* Etiqueta corta del rango elegido en el calendario. */
+        function etiquetaRango() {
+            const { from, to } = getDateRange();
+            const f = (d) => d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (from && to) return f(from) + ' – ' + f(to);
+            if (from) return 'desde el ' + f(from);
+            if (to) return 'hasta el ' + f(to);
+            return 'todo el historial';
+        }
+
+        /* Destacada calculada sobre EXACTAMENTE el rango que se eligió,
+           para que al mover las fechas cambie el resultado. */
+        function topPerformerRango(records) {
+            if (!records.length) return null;
+            const ranked = weightedRanking(records).filter(s => s.agg.count >= 2);
+            if (!ranked.length) return null;
+            return { winner: ranked[0], label: etiquetaRango(), total: records.length, scope: 'rango' };
+        }
+
         function destacadaCard(top) {
             if (!top) return '';
             const w = top.winner;
             const icono = top.scope === 'week' ? '⭐' : '🏆';
-            const rotulo = top.scope === 'week' ? 'Destacada de la semana' : 'Destacada del mes';
+            const rotulo = top.scope === 'week' ? 'Destacada de la semana'
+                         : (top.scope === 'rango' ? 'Destacada del periodo' : 'Destacada del mes');
             return `
                 <div class="destacada ${top.scope}">
                     <div class="dest-ico">${icono}</div>
@@ -3055,12 +3207,14 @@
             hintEl.textContent = 'El orden pondera el puntaje con la cantidad de auditorías: un 100% con una sola visita no supera a un 90% con treinta. Toca una supervisora para ver su ficha.';
 
             const rows = weightedRanking(records);
-            const mejorMes = topPerformer(records, 'month');
-            const mejorSemana = topPerformer(records, 'week');
 
-            const destacadas = (mejorMes || mejorSemana)
-                ? `<div class="dest-wrap">${destacadaCard(mejorMes)}${destacadaCard(mejorSemana)}</div>`
-                : '';
+            // Con un rango elegido en el calendario, la destacada se calcula
+            // sobre ese rango exacto. Sin rango, se muestran mes y semana.
+            const { from, to } = getDateRange();
+            const tarjetas = (from || to)
+                ? destacadaCard(topPerformerRango(records))
+                : destacadaCard(topPerformer(records, 'month')) + destacadaCard(topPerformer(records, 'week'));
+            const destacadas = tarjetas ? `<div class="dest-wrap">${tarjetas}</div>` : '';
 
             const rankeadas = rows.filter(r => r.eligible);
             const sinMuestra = rows.filter(r => !r.eligible);
