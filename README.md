@@ -129,6 +129,64 @@ las fotos de evidencia** de cada punto.
 > Las auditorías guardadas **antes** de esta versión no tienen el detalle ítem por ítem
 > (solo el puntaje). La app lo indica claramente en lugar de mostrar datos vacíos.
 
+### Cómo se ordena el ranking (y por qué es justo)
+
+Comparar un 100% de una sola visita con un 90% sostenido en treinta no tiene sentido.
+Por eso el orden usa dos reglas:
+
+1. **Mínimo 3 auditorías** para entrar al ranking. Quien tenga menos aparece aparte,
+   marcada como *sin muestra suficiente* — no se la penaliza, simplemente todavía no
+   hay con qué compararla.
+2. **Índice ponderado**: el puntaje real se ajusta según cuántas auditorías lo respaldan.
+   Con pocas visitas el índice se acerca al promedio general; con muchas, se queda
+   prácticamente en el puntaje real.
+
+En la tarjeta se ven ambos números: el **puntaje** (resultado real) y el **índice**
+(el que decide el orden), más el nivel de **confianza** — Alta (10+), Media (4–9), Baja (≤3).
+
+También se resalta la **destacada del mes** y la **destacada de la semana**.
+
+---
+
+## 📑 Informes PDF
+
+Todos respetan los filtros activos y se descargan desde la pestaña *Historial*.
+
+| Informe | Contenido |
+|---|---|
+| **General** | Consolidado, tendencia por periodo, ranking ponderado de supervisoras y resumen de averías |
+| **Por supervisora** | Se genera automáticamente al filtrar por una supervisora: gauges, indicadores, evolución, puntos a reforzar y detalle de cada auditoría |
+| **Mantenimiento** | Averías agrupadas por habitación y ordenadas por antigüedad, con hoja de control de ejecución para firmar la reparación |
+
+En el informe de mantenimiento, la antigüedad se marca en **rojo** si supera los 7 días
+y en **ámbar** si supera los 3, para priorizar.
+
+---
+
+## 👥 Supervisoras
+
+- El campo **Supervisora Evaluada** es un **desplegable** con los nombres registrados.
+  No se escribe a mano: así la misma persona no queda partida en dos historiales
+  por una tilde o una abreviatura.
+- No se puede guardar una auditoría sin elegir supervisora.
+- **Añadir**: botón ⚙️ junto al campo → escribir el nombre → *+ Añadir*.
+  Aparece de inmediato en el desplegable y en el resto de dispositivos.
+- **Eliminar**: pide el **PIN de dirección (6284)** y avisa cuántas auditorías se
+  perderán, porque **borrar a una supervisora borra también su historial**.
+  La eliminación se propaga a todos los dispositivos y no reaparece al sincronizar.
+- Si se vuelve a registrar el mismo nombre más adelante, entra limpia: sus
+  auditorías anteriores al borrado no vuelven.
+
+---
+
+## ✏️ Editar el checklist
+
+- **Añadir ítem**: se guarda al momento y se sincroniza con los demás dispositivos.
+- **Eliminar ítem**: pide el **PIN de administrador (6284)**. Las auditorías ya guardadas
+  no se ven afectadas.
+- El checklist se resuelve por *"gana el más reciente"*: si se edita en dos equipos, queda
+  la última versión, y una eliminación no reaparece al sincronizar.
+
 ---
 
 ## Cómo se calcula la puntuación

@@ -1441,7 +1441,7 @@
                 <div class="grid-layout">
                     <div class="form-group">
                         <label>Número de Habitación</label>
-                        <input type="text" id="room_number" class="form-control" placeholder="Ej. 101" value="101">
+                        <input type="text" id="room_number" class="form-control" inputmode="numeric" placeholder="Número de habitación">
                     </div>
                     <div class="form-group">
                         <label>Fecha y Hora</label>
@@ -1454,10 +1454,8 @@
                     <div class="form-group">
                         <label>Supervisora Evaluada</label>
                         <div class="supervisor-row">
-                            <input type="text" id="supervisor_name" class="form-control" list="supervisors-datalist" placeholder="Escribe o selecciona una supervisora...">
-                            <datalist id="supervisors-datalist"></datalist>
-                            <button type="button" class="icon-btn" title="Guardar esta supervisora en la lista" onclick="saveTypedSupervisor()">💾</button>
-                            <button type="button" class="icon-btn" title="Gestionar supervisoras" onclick="toggleSupervisorPanel()">⚙️</button>
+                            <select id="supervisor_name" class="form-control"></select>
+                            <button type="button" class="icon-btn" title="Añadir o quitar supervisoras" onclick="toggleSupervisorPanel()">⚙️</button>
                         </div>
                         <div class="supervisor-panel" id="supervisor-panel">
                             <div style="font-size:0.8rem; font-weight:600; color:var(--primary); margin-bottom:6px;">Supervisoras registradas:</div>
@@ -1936,11 +1934,13 @@
                 await storageSetJSON('config:moduleII', moduleII);
             }
             const moduleTs = (await storageGetJSON('config:moduleTs')) || 0;
-            CONFIG = { supervisors, moduleI, moduleII, moduleTs };
+            const supervisorsDeleted = (await storageGetJSON('config:supervisorsDeleted')) || [];
+            CONFIG = { supervisors, moduleI, moduleII, moduleTs, supervisorsDeleted };
         }
 
         async function persistSupervisors() {
             await storageSetJSON('config:supervisors', CONFIG.supervisors);
+            await storageSetJSON('config:supervisorsDeleted', CONFIG.supervisorsDeleted || []);
         }
         /* Guarda el checklist marcándolo con la hora del cambio. Ese sello es
            lo que permite que un ítem añadido en un teléfono llegue al resto y
@@ -1957,14 +1957,23 @@
            RENDER: SUPERVISORAS
            ========================================================= */
         function renderSupervisors() {
-            const datalist = document.getElementById('supervisors-datalist');
-            datalist.innerHTML = CONFIG.supervisors.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
+            /* El campo es un desplegable: se elige de la lista registrada, así
+               nadie escribe el mismo nombre de dos formas distintas y el
+               historial de cada supervisora queda siempre agrupado. */
+            const sel = document.getElementById('supervisor_name');
+            const elegida = sel.value;
+            const lista = CONFIG.supervisors.slice().sort((a, b) => a.localeCompare(b, 'es'));
+            sel.innerHTML = (lista.length
+                    ? '<option value="">Selecciona una supervisora…</option>'
+                    : '<option value="">Sin supervisoras registradas — usa ⚙️ para añadir</option>')
+                + lista.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+            sel.value = lista.includes(elegida) ? elegida : '';
 
             const chips = document.getElementById('supervisor-chips');
             if (CONFIG.supervisors.length === 0) {
                 chips.innerHTML = '<span style="font-size:0.8rem; color:#94a3b8;">Sin supervisoras registradas todavía.</span>';
             } else {
-                chips.innerHTML = CONFIG.supervisors.map(s =>
+                chips.innerHTML = lista.map(s =>
                     `<span class="supervisor-chip">${escapeHtml(s)} <button type="button" onclick="removeSupervisor('${escapeAttr(s)}')" title="Eliminar">×</button></span>`
                 ).join('');
             }
@@ -1994,33 +2003,82 @@
                 return;
             }
             CONFIG.supervisors.push(name);
+            // Si estuvo borrada, se marca el alta: el nombre vuelve a la lista,
+            // pero sus auditorías viejas siguen eliminadas.
+            (CONFIG.supervisorsDeleted || []).forEach(t => { if (t.name === name) t.readdedTs = Date.now(); });
             await persistSupervisors();
             renderSupervisors();
             input.value = '';
+            document.getElementById('supervisor_name').value = name;
             showToast('✅ Supervisora añadida: ' + name);
+            pushRemote();
         }
 
-        async function saveTypedSupervisor() {
-            const name = document.getElementById('supervisor_name').value.trim();
-            if (!name) {
-                showToast('Escribe primero un nombre en el campo de supervisora.');
-                return;
-            }
-            if (CONFIG.supervisors.includes(name)) {
-                showToast('Esa supervisora ya está en la lista.');
-                return;
-            }
-            CONFIG.supervisors.push(name);
-            await persistSupervisors();
-            renderSupervisors();
-            showToast('✅ Supervisora guardada: ' + name);
-        }
-
+        /* Eliminar una supervisora borra también SUS auditorías: es una acción
+           irreversible que altera el historial, por eso pide el PIN de
+           dirección igual que borrar un ítem del checklist. La "lápida"
+           (supervisorsDeleted) evita que otro teléfono vuelva a subirlas. */
         async function removeSupervisor(name) {
-            if (!confirm('¿Eliminar a "' + name + '" de la lista de supervisoras?')) return;
+            const registros = (await fetchAllRecords()).filter(r => r.supervisor === name);
+            const aviso = registros.length
+                ? 'Se eliminarán también sus ' + registros.length + ' auditoría(s) del historial. Esto no se puede deshacer.'
+                : 'No tiene auditorías registradas.';
+            if (!await pedirConfig('Eliminar a "' + name + '"', aviso)) return;
+            if (!confirm('¿Eliminar a "' + name + '" y sus ' + registros.length + ' auditoría(s)?')) return;
+
+            const marca = Date.now();
             CONFIG.supervisors = CONFIG.supervisors.filter(s => s !== name);
+            CONFIG.supervisorsDeleted = (CONFIG.supervisorsDeleted || []).filter(t => t.name !== name);
+            CONFIG.supervisorsDeleted.push({ name, ts: marca, readdedTs: 0 });
+            for (const r of registros) await DB.delete('audit:' + r.ts);
             await persistSupervisors();
             renderSupervisors();
+
+            const sel = document.getElementById('supervisor_name');
+            if (sel.value === name) sel.value = '';
+
+            const subido = await pushRemote();
+            const vista = document.getElementById('view-history');
+            if (vista && vista.classList.contains('active')) await renderHistory();
+            showToast(registros.length
+                ? '🗑️ ' + name + ' y sus ' + registros.length + ' auditoría(s) se eliminaron' + (subido ? ' en todos los dispositivos.' : ' aquí (se sincronizará al recuperar conexión).')
+                : '🗑️ ' + name + ' se eliminó de la lista.', 4000);
+        }
+
+        /* Aplica las lápidas: descarta nombres borrados y las auditorías
+           anteriores al borrado. Si la supervisora se vuelve a registrar, sus
+           auditorías nuevas (posteriores a la marca) sí se conservan. */
+        function tombstonesActivas() { return CONFIG.supervisorsDeleted || []; }
+
+        function filtrarBorradas(records) {
+            const t = tombstonesActivas();
+            if (!t.length) return records || [];
+            const porNombre = new Map(t.map(x => [x.name, Number(x.ts) || 0]));
+            return (records || []).filter(r => {
+                const marca = porNombre.get(r && r.supervisor);
+                return marca === undefined || Number(r.ts) > marca;
+            });
+        }
+
+        function mergeTombstones(remoteList, localList) {
+            const map = new Map();
+            [...(remoteList || []), ...(localList || [])].forEach(t => {
+                if (!t || !t.name) return;
+                const prev = map.get(t.name) || { name: t.name, ts: 0, readdedTs: 0 };
+                map.set(t.name, {
+                    name: t.name,
+                    ts: Math.max(Number(prev.ts) || 0, Number(t.ts) || 0),
+                    readdedTs: Math.max(Number(prev.readdedTs) || 0, Number(t.readdedTs) || 0)
+                });
+            });
+            return Array.from(map.values());
+        }
+
+        /* Un nombre borrado no vuelve a la lista al sincronizar, salvo que se
+           haya dado de alta otra vez después del borrado. */
+        function nombreBorrado(name) {
+            const t = tombstonesActivas().find(x => x.name === name);
+            return !!t && (Number(t.readdedTs) || 0) <= (Number(t.ts) || 0);
         }
 
         /* =========================================================
@@ -2723,7 +2781,8 @@
         }
 
         function mergeSupervisorLists(remoteList, localList) {
-            return Array.from(new Set([...(remoteList || []), ...(localList || [])]));
+            return Array.from(new Set([...(remoteList || []), ...(localList || [])]))
+                .filter(n => !nombreBorrado(n));
         }
 
         /* Trae lo último de la nube y lo fusiona con lo que hay en este
@@ -2738,19 +2797,25 @@
             // Si se borró todo desde otro dispositivo, se acata antes de fusionar
             const seReseteo = await aplicarReset(remote.data);
 
+            // Las supervisoras borradas desde otro equipo se acatan primero,
+            // así sus auditorías no reaparecen aquí.
+            CONFIG.supervisorsDeleted = mergeTombstones(remote.data.supervisorsDeleted, CONFIG.supervisorsDeleted);
+
             const localRecords = await fetchAllRecords();
-            const mergedRecords = mergeRecordsByTs(remote.data.records, localRecords);
+            const mergedRecords = filtrarBorradas(mergeRecordsByTs(remote.data.records, localRecords));
             let changed = seReseteo || mergedRecords.length !== localRecords.length;
+            const vivos = new Set(mergedRecords.map(r => r.ts));
+            for (const rec of localRecords) {
+                if (!vivos.has(rec.ts)) { await DB.delete('audit:' + rec.ts); changed = true; }
+            }
             for (const rec of mergedRecords) {
                 await storageSetJSON('audit:' + rec.ts, rec);
             }
 
             const mergedSupervisors = mergeSupervisorLists(remote.data.supervisors, CONFIG.supervisors);
-            if (mergedSupervisors.length !== CONFIG.supervisors.length) {
-                changed = true;
-                CONFIG.supervisors = mergedSupervisors;
-                await persistSupervisors();
-            }
+            if (mergedSupervisors.join('|') !== CONFIG.supervisors.join('|')) changed = true;
+            CONFIG.supervisors = mergedSupervisors;
+            await persistSupervisors();
 
             // Trae los ítems del checklist añadidos o borrados desde otro equipo
             if (await adoptRemoteModules(remote.data)) changed = true;
@@ -2776,16 +2841,21 @@
                     await aplicarReset(remote.data);
                 }
 
+                if (remote.ok && remote.data) {
+                    CONFIG.supervisorsDeleted = mergeTombstones(remote.data.supervisorsDeleted, CONFIG.supervisorsDeleted);
+                }
+
                 const localRecords = await fetchAllRecords();
-                const mergedRecords = remote.ok && remote.data
+                const mergedRecords = filtrarBorradas(remote.ok && remote.data
                     ? mergeRecordsByTs(remote.data.records, localRecords)
-                    : localRecords;
+                    : localRecords);
                 const mergedSupervisors = remote.ok && remote.data
                     ? mergeSupervisorLists(remote.data.supervisors, CONFIG.supervisors)
-                    : CONFIG.supervisors;
+                    : CONFIG.supervisors.filter(n => !nombreBorrado(n));
 
                 const payload = {
                     supervisors: mergedSupervisors,
+                    supervisorsDeleted: CONFIG.supervisorsDeleted || [],
                     moduleI: CONFIG.moduleI,
                     moduleII: CONFIG.moduleII,
                     moduleTs: CONFIG.moduleTs || 0,
@@ -2810,10 +2880,10 @@
                     for (const rec of mergedRecords) {
                         await storageSetJSON('audit:' + rec.ts, rec);
                     }
-                    if (mergedSupervisors.length !== CONFIG.supervisors.length) {
+                    if (mergedSupervisors.join('|') !== CONFIG.supervisors.join('|')) {
                         CONFIG.supervisors = mergedSupervisors;
-                        await persistSupervisors();
                     }
+                    await persistSupervisors();
                     return true;
                 }
                 return false;
@@ -3747,6 +3817,23 @@
         /* ---------- BOTÓN 1: Guardar evaluación en el historial (independiente del PDF) ---------- */
         async function guardarEvaluacion() {
             const s = getCurrentScores();
+            // El campo empieza vacío: sin este aviso podrían guardarse
+            // auditorías sin habitación, imposibles de rastrear después.
+            const hab = document.getElementById('room_number').value.trim();
+            if (!hab) {
+                showToast('Escribe el número de habitación antes de guardar.', 3500);
+                document.getElementById('room_number').focus();
+                document.getElementById('room_number').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            if (!document.getElementById('supervisor_name').value) {
+                showToast(CONFIG.supervisors.length
+                    ? 'Selecciona la supervisora evaluada antes de guardar.'
+                    : 'Registra primero una supervisora con el botón ⚙️.', 3500);
+                document.getElementById('supervisor_name').focus();
+                document.getElementById('supervisor_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
             if (s.answered === 0) {
                 showToast('Responde al menos un ítem antes de guardar.');
                 return;
@@ -3781,6 +3868,13 @@
         /* ---------- BOTÓN 2: Generar reporte PDF (no guarda nada) ---------- */
         async function generarPDF() {
             const s = getCurrentScores();
+            const habPDF = document.getElementById('room_number').value.trim();
+            if (!habPDF) {
+                showToast('Escribe el número de habitación antes de generar el reporte.', 3500);
+                document.getElementById('room_number').focus();
+                document.getElementById('room_number').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
             if (s.answered === 0) {
                 showToast('Responde al menos un ítem antes de generar el PDF.');
                 return;
