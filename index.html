@@ -2677,6 +2677,31 @@
             return Array.from(map.values());
         }
 
+        /* Borrado global del historial.
+           Cuando se limpia todo desde un dispositivo, los demás pueden seguir
+           teniendo el historial viejo guardado localmente y volverían a
+           subirlo al guardar la siguiente auditoría. La marca "resetTs" evita
+           eso: si la nube tiene una fecha de borrado más nueva que la de este
+           dispositivo, aquí también se borra el historial local. */
+        async function aplicarReset(data) {
+            if (!data) return false;
+            const remoteReset = Number(data.resetTs) || 0;
+            const localReset = Number(await storageGetJSON('config:resetTs')) || 0;
+            if (remoteReset <= localReset) return false;
+
+            // Solo se borra lo ANTERIOR al momento del borrado. Una auditoría
+            // creada después es nueva y debe conservarse: la clave lleva su
+            // fecha de creación, así que basta con compararlas.
+            const keys = await DB.list('audit:');
+            let borradas = 0;
+            for (const k of keys) {
+                const ts = Number(k.slice(k.indexOf(':') + 1)) || 0;
+                if (ts < remoteReset) { await DB.delete(k); borradas++; }
+            }
+            await storageSetJSON('config:resetTs', remoteReset);
+            return borradas > 0;
+        }
+
         /* El checklist se resuelve por "gana el más reciente": es una lista
            editada por el administrador, no algo que dos personas cambien a la
            vez, y así una eliminación no revive al sincronizar. */
@@ -2710,9 +2735,12 @@
             remoteConfirmedOnce = true;
             if (!remote.data) return false;
 
+            // Si se borró todo desde otro dispositivo, se acata antes de fusionar
+            const seReseteo = await aplicarReset(remote.data);
+
             const localRecords = await fetchAllRecords();
             const mergedRecords = mergeRecordsByTs(remote.data.records, localRecords);
-            let changed = mergedRecords.length !== localRecords.length;
+            let changed = seReseteo || mergedRecords.length !== localRecords.length;
             for (const rec of mergedRecords) {
                 await storageSetJSON('audit:' + rec.ts, rec);
             }
@@ -2741,7 +2769,12 @@
 
                 // Si la nube tiene un checklist más nuevo, se adopta ANTES de
                 // subir, para no pisar con esta copia lo que cambió otro equipo.
-                if (remote.ok && remote.data) await adoptRemoteModules(remote.data);
+                // Lo mismo con un borrado global: primero se acata, y así no se
+                // vuelve a subir un historial que ya se eliminó.
+                if (remote.ok && remote.data) {
+                    await adoptRemoteModules(remote.data);
+                    await aplicarReset(remote.data);
+                }
 
                 const localRecords = await fetchAllRecords();
                 const mergedRecords = remote.ok && remote.data
@@ -2756,6 +2789,9 @@
                     moduleI: CONFIG.moduleI,
                     moduleII: CONFIG.moduleII,
                     moduleTs: CONFIG.moduleTs || 0,
+                    // Se conserva la marca de borrado para no anularla al subir
+                    resetTs: Number(remote.ok && remote.data && remote.data.resetTs) ||
+                             Number(await storageGetJSON('config:resetTs')) || 0,
                     records: mergedRecords
                 };
 
